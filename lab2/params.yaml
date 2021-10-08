@@ -1,0 +1,14 @@
+scan_topic: "base_scan"
+
+odom_topic: "odom"
+
+gt_pose_topic: "base_pose_ground_truth"
+
+goal_seeker: "goal_seeker"
+
+goal_seeker_drive_topic: "cmd_vel"
+threshold_for_triggering_ransac: 1.0
+
+inliner_threshold: 0.01
+
+ransac_iteration_count : 4

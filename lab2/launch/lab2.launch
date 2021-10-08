@@ -1,4 +1,11 @@
 <launch>
+
+
+	<node pkg="lab2" name="ransac" type="ransac.py" output="screen">
+		<rosparam command="load" file="$(find lab2)/params.yaml"/>
+	  </node>
+
+
 	<node name="stage" pkg="stage_ros" type="stageros"
 	      args="$(find lab2)/world/playground.world" />
 </launch>
