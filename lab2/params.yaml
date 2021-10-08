@@ -7,8 +7,8 @@ gt_pose_topic: "base_pose_ground_truth"
 goal_seeker: "goal_seeker"
 
 goal_seeker_drive_topic: "cmd_vel"
-threshold_for_triggering_ransac: 1.0
+threshold_for_triggering_ransac: 2.0
 
-inliner_threshold: 0.01
+inliner_threshold: 0.09
 
 ransac_iteration_count : 4

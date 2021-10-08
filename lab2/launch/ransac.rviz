@@ -8,6 +8,7 @@ Panels:
         - /Status1
         - /Grid1
         - /Marker1
+        - /Marker1/Status1
       Splitter Ratio: 0.5
     Tree Height: 753
   - Class: rviz/Selection
@@ -67,7 +68,7 @@ Visualization Manager:
     Background Color: 48; 48; 48
     Default Light: true
     Fixed Frame: odom
-    Frame Rate: 30
+    Frame Rate: 5
   Name: root
   Tools:
     - Class: rviz/Interact
@@ -90,7 +91,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 20.13890266418457
+      Distance: 11.232332229614258
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -105,10 +106,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8397977352142334
+      Pitch: 0.5847978591918945
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.1085622310638428
+      Yaw: 2.718562364578247
     Saved: ~
 Window Geometry:
   Displays:

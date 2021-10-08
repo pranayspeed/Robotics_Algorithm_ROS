@@ -48,8 +48,10 @@ class RANSAC:
     def check_fitting(self,msg):
         min_range = min(msg.ranges)
         if min_range <self.threshold_for_triggering_ransac:
-            #print("ransac triggered",min_range)
+            
             self.fit_lines(msg)
+        else:
+            print("ransac not triggered",min_range)
 
     def fit_lines(self, msg):
 
@@ -106,14 +108,14 @@ class RANSAC:
                 lines_marker.points.append(line[1])
             self.marker_pub.publish(lines_marker)
             #print(lines,"-----------------", len(lines))
-        self.marker_pub.publish(points)
+        #self.marker_pub.publish(points)
 
     def ransac(self, points,min_dist):
         
         #choose number of points, for line need only two points
         n_pt=2
         #choose point threshold in percent, for termination condition
-        threshold_per = 0.10
+        threshold_per = 0.30
 
         #inliner threshold
         inliner_threshold_dist = self.inliner_threshold
@@ -158,16 +160,19 @@ class RANSAC:
                     pts1 = np.array([p1.x,p1.y])
                     pts2 = np.array([p2.x,p2.y])
                     pts3 = np.array([pt.x,pt.y])
+                    pt_dist=0.0
+                    try:
+                        pt_dist = np.abs(np.linalg.norm(np.cross(pts2-pts1, pts1-pts3)))/np.linalg.norm(pts2-pts1)
+                    except:
+                        pass
 
-                    pt_dist = np.abs(np.linalg.norm(np.cross(pts2-pts1, pts1-pts3)))/np.linalg.norm(pts2-pts1)
-
-                    #\pt_dist = np.dot(np.array([p1.x,p1.y])-np.array([p2.x,p2.y]), np.array([pt.x,pt.y]))
+                    #pt_dist = np.dot(np.array([p1.x,p1.y])-np.array([p2.x,p2.y]), np.array([pt.x,pt.y]))
                     if  pt_dist < inliner_threshold_dist:
                         inliner_count+=1
                     else:
                         out_liners.append(pt)
                 #selected wrong points
-                if inliner_count<3:
+                if inliner_count<termination_point_count:
                     continue
 
                 if inliner_count > max_inliers:
@@ -176,6 +181,9 @@ class RANSAC:
                     best_line = [p1,p2]
             if best_line:
                 lines.append(best_line)
+                if len(lines)>3:
+                    break
+                
             point_list = out_liners
 
         return lines
