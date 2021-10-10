@@ -1,0 +1,13 @@
+<launch>
+
+	<node pkg="lab2" name="perception" type="ransac.py" output="screen">
+		<rosparam command="load" file="$(find lab2)/params.yaml"/>
+	</node>
+	<node pkg="lab2" name="bug2" type="bug2.py" output="screen">
+		<rosparam command="load" file="$(find lab2)/params.yaml"/>
+	</node>
+
+
+	<node name="stage" pkg="stage_ros" type="stageros"
+	      args="$(find lab2)/world/playground.world" />
+</launch>
