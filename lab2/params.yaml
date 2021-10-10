@@ -17,4 +17,4 @@ start_pt: [-8.0,-2.0]
 
 ransac_lines : "visualization_marker"
 
-collision_threshold: 0.5
+collision_threshold: 0.7

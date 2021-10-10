@@ -226,7 +226,7 @@ class RANSAC:
             if best_line:
                 #self.publish_line(best_line)
                 lines.append(best_line)
-                
+                break
                 #if len(lines)>3:
                 #    break
                 
