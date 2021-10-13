@@ -16,6 +16,9 @@ import math
 import numpy as np
 import random
 
+from Line import Line
+
+
 
 class RANSAC:
     """ Implement ransac algo to display lines
@@ -38,7 +41,8 @@ class RANSAC:
 
         self.marker_pub = rospy.Publisher(ransac_lines_topic, Marker, queue_size=10)
   
-        
+
+
     def seek_goal(self, msg):
         twist_msg = Twist()
         twist_msg.linear= Vector3(1,0,0)
@@ -46,12 +50,15 @@ class RANSAC:
 
 
     def check_fitting(self,msg):
+        
         min_range = min(msg.ranges)
+
         if min_range <self.threshold_for_triggering_ransac:
-            
             self.fit_lines(msg)
         else:
             print("ransac not triggered",min_range)
+        
+        #self.fit_lines(msg)
 
     def get_line_parameter(self, points):
         #points : list of polar coordinates p_i and Theta_i
@@ -145,7 +152,7 @@ class RANSAC:
             #print(lines,"-----------------", len(lines))
         #self.marker_pub.publish(points)
 
-    def publish_line(self, line):
+    def publish_line_polar(self, line):
         lines_marker = Marker()
         lines_marker.type = Marker.LINE_LIST
         lines_marker.scale.x=0.2
@@ -165,7 +172,7 @@ class RANSAC:
         #choose number of points, for line need only two points
         n_pt=2
         #choose point threshold in percent, for termination condition
-        threshold_per = 0.3
+        threshold_per = 0.05
 
         #inliner threshold
         inliner_threshold_dist = self.inliner_threshold
@@ -224,17 +231,28 @@ class RANSAC:
                     
                     best_line = [[0,0],line]# [p1,p2]
             if best_line:
-                #self.publish_line(best_line)
+                #self.publish_line_polar(best_line)
                 lines.append(best_line)
-                break
-                #if len(lines)>3:
-                #    break
+
                 
             point_list = out_liners
 
         return lines
 
 
+    def publish_lines(self, lines):
+        if len(lines)>0: # check for list is not empty
+            fitted_lines = Marker()
+            fitted_lines.type = Marker.LINE_LIST
+            fitted_lines.scale.x=0.2
+            fitted_lines.scale.y=0.2
+            fitted_lines.color = ColorRGBA(1.0,1.0,0,1)   
+            fitted_lines.header.frame_id= "odom"     
+            for line in lines:
+                [p1,p2] = line.get_ros_points()
+                fitted_lines.points.append(p1)
+                fitted_lines.points.append(p2)
+            self.marker_pub.publish(fitted_lines)
 
     def fit_lines(self, msg):
 
@@ -251,8 +269,8 @@ class RANSAC:
         angle_min =        msg.angle_min
         angle_increment =  msg.angle_increment
 
-        base_x=0
-        base_y=0
+        # base_x=0
+        # base_y=0
 
         min_dist = 0.0
         for pt_indx in range(len(msg.ranges)):
@@ -263,38 +281,27 @@ class RANSAC:
             y = msg.ranges[pt_indx]* math.sin(pt_angle)
             points.points.append(Point(x,y,0.0))
 
-            if pt_indx ==1:
-                min_dist = np.linalg.norm(np.array([base_x,base_y]) - np.array([x,y]))
+            # if pt_indx ==1:
+            #     min_dist = np.linalg.norm(np.array([base_x,base_y]) - np.array([x,y]))
 
-            base_x=x
-            base_y=y
+            # base_x=x
+            # base_y=y
 
 
-        lines = self.ransac(points.points, min_dist)
+        lines = self.ransac(points.points)
 
-        if len(lines)>0:
-            lines_marker = Marker()
-            lines_marker.type = Marker.LINE_LIST
-            lines_marker.scale.x=0.2
-            lines_marker.scale.y=0.2
-            lines_marker.color = ColorRGBA(1.0,1.0,0,1)
+        self.publish_lines(lines)
 
-            lines_marker.header.frame_id= "odom"
 
-            for line in lines:
-                lines_marker.points.append(line[0])
-                lines_marker.points.append(line[1])
-            self.marker_pub.publish(lines_marker)
-            #print(lines,"-----------------", len(lines))
         #self.marker_pub.publish(points)
 
 
-    def ransac(self, points,min_dist):
+    def ransac(self, points):
         
         #choose number of points, for line need only two points
         n_pt=2
         #choose point threshold in percent, for termination condition
-        threshold_per = 0.30
+        threshold_per = 0.20 # 5% remaining
 
         #inliner threshold
         inliner_threshold_dist = self.inliner_threshold
@@ -304,7 +311,7 @@ class RANSAC:
         k=self.ransac_iteration_count
 
         #create a copy and process, since the process needs elemination
-        point_list=points#.copy()
+        point_list=points
         
         termination_point_count = int (len(point_list)*threshold_per)
 
@@ -324,47 +331,40 @@ class RANSAC:
                 
                 p1 = random.choice(point_list)
                 p2 = random.choice(point_list)
-                
+                while p1 == p2: #make sure that different points are selected
+                    p1 = random.choice(point_list)
+                    p2 = random.choice(point_list) 
 
-                #p1 = rand_pts[0]
-                #p2 = rand_pts[1]
-                #rand_pts = [[p1.x,p1.y],[p2.x,p2.y]]
+                selected_line = Line(np.array([p1.x,p1.y]),np.array([p2.x,p2.y]))                  
+
                 #Draw a vector
                 inliner_count = 0
                 out_liners = []
 
-                pts1 = np.array([p1.x,p1.y])
-                pts2 = np.array([p2.x,p2.y])
-                line_1 = pts2-pts1
-                line_1_d = np.linalg.norm(pts2-pts1)    
+                # pts1 = np.array([p1.x,p1.y])
+                # pts2 = np.array([p2.x,p2.y])
+                # line_1 = pts2-pts1
+                # line_1_d = np.linalg.norm(line_1)    
                 #loop points
                 for pt in point_list:
-                    #Take dot product for each point
+                    #Find distance from the point
 
-                    pts3 = np.array([pt.x,pt.y])
-                    pt_dist=0.0
-                    try:
-                        pt_dist = np.abs(np.linalg.norm(np.cross(line_1, pts1-pts3)))/line_1_d
-                    except:
-                        pass
-
-                    #pt_dist = np.dot(np.array([p1.x,p1.y])-np.array([p2.x,p2.y]), np.array([pt.x,pt.y]))
+                    pt_dist=np.abs(selected_line.get_shortest_dist_from_pt(np.array([pt.x,pt.y])))
                     if  pt_dist < inliner_threshold_dist:
                         inliner_count+=1
                     else:
                         out_liners.append(pt)
-                #selected wrong points
-                if inliner_count<termination_point_count:
-                    continue
+                # #selected wrong points
+                # if inliner_count<termination_point_count:
+                #     continue
 
                 if inliner_count > max_inliers:
                     max_inliers = inliner_count
 
-                    best_line = [p1,p2]
+                    best_line = selected_line
             if best_line:
                 lines.append(best_line)
-                #if len(lines)>3:
-                #    break
+
                 
             point_list = out_liners
 

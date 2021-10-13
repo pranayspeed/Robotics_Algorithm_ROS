@@ -11,10 +11,11 @@ threshold_for_triggering_ransac: 2.0
 
 inliner_threshold: 0.09
 
-ransac_iteration_count : 4
+ransac_iteration_count : 8
 goal_pt: [4.5,9.0]
 start_pt: [-8.0,-2.0]
 
-ransac_lines : "visualization_marker"
+ransac_lines : "obstacle_lines"
+drive_line : "drive_direction"
 
 collision_threshold: 0.7

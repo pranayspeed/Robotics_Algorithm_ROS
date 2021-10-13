@@ -18,48 +18,11 @@ import tf
 import math
 
 
-class Line:
-    #initialize goal line with start and end point
-    def __init__(self, start_pt, end_pt):
-        self.start = start_pt
-        self.end = end_pt
+from visualization_msgs.msg import Marker
+from std_msgs.msg import ColorRGBA
 
-    def get_shortest_dist_from_pt(self, pt):
-        return abs(np.cross(self.end-self.start, self.start-pt)/np.linalg.norm(self.end-self.start))
 
-    
-    def get_alignment_angle(self, other_line):
-        # print(other_line.end)
-        # print(other_line.start)
-        # print(self.end)
-        # print(self.start)
-        vec1 = other_line.end - other_line.start
-        vec2 = self.end - self.start
-        return math.degrees(math.atan2(vec2[1],vec2[0]) - math.atan2(vec1[1],vec1[0]))
-        
-
-    def get_angle_of_normal_at_orgin(self):
-
-        pt = np.array([0.0,0.0])
-        x_axis = Line(np.array(pt), np.array([1.0,0.0]))
-        normal_vec_line  = self.get_normal_from_pt(pt)
-        normal_angle = normal_vec_line.get_alignment_angle(x_axis)
-
-        return normal_angle
-        #dist = np.linalg.norm(np.array(pt) - pt_on_line)
-        #print("goal line distance", dist)
-
-    def get_normal_from_pt(self, pt):
-        vec = self.end-self.start
-        
-        uvec = vec / np.linalg.norm(vec)
-        pt_vec = pt - self.start
-        dist_proj = np.dot(pt_vec, uvec)
-        proj_vector = uvec * dist_proj
-        pt_on_line = self.start + proj_vector
-        
-        normal_vec = np.array(pt) - pt_on_line
-        return Line(np.array(pt), pt_on_line)
+from Line import Line
 
 class CarState:
     def __init__(self, states):
@@ -95,7 +58,7 @@ class CarState:
 class Bug2:
     mode_list = ["GOAL_SEEK","WALL_FOLLOW"]
     motion_list = ["forward", "rotate"]
-    def __init__(self, start_pt, goal_pt, car_state,collision_detection_threshold=6):
+    def __init__(self, start_pt, goal_pt, car_state,collision_detection_threshold=1.5):
         self.mode = self.mode_list[0]
         self.goal_line = Line(start_pt, goal_pt)
         self.start_pt = start_pt
@@ -103,7 +66,7 @@ class Bug2:
         self.car_current_state = car_state
         self.last_change_pt = start_pt
 
-        self.obstacle_line = None
+        self.obstacle_lines = []
 
         self.collision_detection_threshold = collision_detection_threshold
 
@@ -115,36 +78,76 @@ class Bug2:
 
         self.angle_alignment_threshold = 3.0
 
-        self.current_rotation_direction = current_direction
+        #self.current_rotation_direction = current_direction
+
+        self.rotation_angle = -90 #right
 
         
 
-    def update_obstacle(self, obstacle_line):
-        if self.mode == self.mode_list[1] and self.motion_state ==self.motion_list[1]:
-            return
-        self.obstacle_line = obstacle_line
+    def update_obstacle(self, obstacle_lines):
+        # if self.mode == self.mode_list[1] and self.motion_state ==self.motion_list[1]:
+        #     return
+        self.obstacle_lines = obstacle_lines
 
     def is_colliding(self):
-        if self.obstacle_line:
+        ob_line_normal = self.get_obstacle_line()
+        if ob_line_normal:
             obstacle_angle = self.get_obstacle_angle()
             
-            dist_from_obstacle = self.obstacle_line.get_shortest_dist_from_pt(self.car_current_state.get_position_vector())
-            print(obstacle_angle, dist_from_obstacle)
+            dist_from_obstacle = ob_line_normal.mag()
+            print(dist_from_obstacle,"obstacle dist")
+            #dist_from_obstacle = self.get_obstacle_line().get_shortest_dist_from_pt(self.car_current_state.get_position_vector())
             if  dist_from_obstacle < self.collision_detection_threshold:
                 print("collision detected  with angle  ", obstacle_angle)
-                if abs(obstacle_angle) < 45.0:
-                    print("collision detected ", obstacle_angle)
+                if abs(obstacle_angle) < 50.0:
+                    print("collision detected ", obstacle_angle," dist", dist_from_obstacle)
                     return True
+
         return False
 
+    def get_closest_obstacle_point(self):
+
+        
+        if len(self.obstacle_lines)>0:
+            closest_dist = 10000.0
+            best_line = self.obstacle_lines[0]
+
+            origin = np.array([0.0,0.0])
+            for line in self.obstacle_lines:
+                dist = line.get_shortest_dist_from_pt(origin)
+                if dist == closest_dist:
+                    closest_dist = dist
+                    best_line = line
+            closest_obstacle_pt = best_line.get_closest_point_from_pt(origin)
+            return closest_obstacle_pt
+        
+        return None
+
+    def get_obstacle_line(self):
+        closest_pt = self.get_closest_obstacle_point()
+        
+        if closest_pt is not None:
+            return Line(np.array([0.0,0.0]), closest_pt)
+        return None      
     def get_obstacle_angle(self):
-        if self.obstacle_line:
-            return self.obstacle_line.get_angle_of_normal_at_orgin()
+        ob_line = self.get_obstacle_line()
+        if ob_line:
+            x_axis = Line(np.array([0.0,0.0]), np.array([1.0,0.0]))
+            return ob_line.get_alignment_angle(x_axis)
+            #return self.get_obstacle_line().get_angle_of_normal_at_orgin()
         return None
             
 
-    def get_current_direction(self):
-        return self.obstacle_line.get_normal_from_pt(np.array([0.0,0.0]))
+    def get_required_direction(self):
+        ob_line = self.get_obstacle_line()
+        if ob_line:
+            x_axis = Line(np.array([0.0,0.0]), np.array([1.0,0.0]))
+            ob_angle = ob_line.get_alignment_angle(x_axis)
+            required_angle = ob_angle + self.rotation_angle
+            #print(required_angle, "required angle ",ob_angle," ob angle")
+            
+            return self.get_obstacle_line().get_rotated_vector(self.rotation_angle)
+        return self.goal_line
 
     def follow_wall(self):
         self.mode = self.mode_list[1] # wall follow state
@@ -152,11 +155,8 @@ class Bug2:
 
         #get rotation angle to align with the wall
         current_direction = self.car_current_state.get_direction_vector()
-        #self.required_rotation = self.obstacle_line.get_alignment_angle(current_direction)
-        #self.required_rotation = self.get_obstacle_angle() - 90
-        self.current_rotation_direction = self.get_current_direction()
 
-        self.required_rotation = self.current_rotation_direction.get_alignment_angle(current_direction)
+        self.required_rotation = self.get_required_direction().get_alignment_angle(current_direction)
 
         self.last_change_pt = self.car_current_state.get_position_vector()
 
@@ -179,15 +179,19 @@ class Bug2:
         #need to return linear and angular velocities
         linear_motion = [0.5,0,0]
 
-        
+        # if not self.is_colliding() and self.mode != self.mode_list[0]:
+        #     if self.motion_state != self.motion_list[1]:
+        #         self.follow_goal()
         if self.mode == self.mode_list[0]: #goal seeking
             if self.motion_state ==self.motion_list[0]: #Moving Forward
                 
                 if self.is_colliding(): #detected wall
+                    
                     self.follow_wall()
                     linear_motion = [0,0,0]
                 else:
                     # move forward, without rotation
+                    #linear_motion = [0,0,0]
                     print("Moving forward without collision at front")
             else: #Goal following started, need to rotate and align with goal line
                 current_direction = self.car_current_state.get_direction_vector()
@@ -210,39 +214,37 @@ class Bug2:
                     #pass #continue moving parallel to wall 
                     #TODO: need to use PID for wall follow
                     current_direction = self.car_current_state.get_direction_vector()
-                    self.current_rotation_direction = self.get_current_direction()
-                    self.required_rotation = self.current_rotation_direction.get_alignment_angle(current_direction)
-                    print("wall following --------- with rotation",self.required_rotation )
-                    linear_motion = [0.1,0,0]
+                    #self.current_rotation_direction = self.get_required_direction()
+                    self.required_rotation = self.get_required_direction().get_alignment_angle(current_direction)
+                    #print("wall following --------- with rotation",self.required_rotation )
+                    linear_motion = [0.5,0,0]
 
             else: #Wall following started, need to rotate and align
                 current_direction = self.car_current_state.get_direction_vector()
-                self.current_rotation_direction = self.get_current_direction()
-                obstacle_angle = self.current_rotation_direction.get_alignment_angle(current_direction)
-                #obstacle_angle = self.get_obstacle_angle()
-                print(obstacle_angle," --- Obstacle angle ", self.required_rotation)
-
+                #self.current_rotation_direction = self.get_required_direction()
+                obstacle_angle = self.get_required_direction().get_alignment_angle(current_direction)
+                obstacle_angle_current = self.get_obstacle_angle()
+                print(obstacle_angle," --- Obstacle angle ", obstacle_angle_current,self.required_rotation)
+                
 
                 #if math.fabs(self.current_rotation_direction.get_alignment_angle(current_direction)) < self.angle_alignment_threshold and 
-                if math.fabs(self.required_rotation) < 3:
+                if math.fabs(self.required_rotation) < 5:
 
                 # if math.fabs(obstacle_angle) < self.angle_alignment_threshold and math.fabs(self.required_rotation) < 4: # rotation complete, need to move forward
                     self.required_rotation=0.0
-                    self.motion_state = self.motion_list[0] #set motion to forward, as rotation is complete
+                    #linear_motion = [0,0,0]
+                    #self.motion_state = self.motion_list[0] #set motion to forward, as rotation is complete
                 else:
                     #continue rotation as still not aligned with wall
                     linear_motion = [0,0,0]
 
-                    current_direction = self.car_current_state.get_direction_vector()
-                    self.current_rotation_direction = self.get_current_direction()
-                    self.required_rotation = self.current_rotation_direction.get_alignment_angle(current_direction)
+                    #current_direction = self.car_current_state.get_direction_vector()
+                    self.current_rotation_direction = self.get_required_direction()
+                    self.required_rotation = self.get_required_direction().get_alignment_angle(current_direction)
                 
         
         
         angular_motion =[0,0,self.required_rotation]
-
-        # if self.required_rotation !=0.0:
-        #     linear_motion = [0,0,0]
 
         return [linear_motion,angular_motion]
 
@@ -271,7 +273,7 @@ class Bug2Motion:
 
         ransac_lines_topic = rospy.get_param("~ransac_lines")
 
-
+        drive_line_topic = rospy.get_param("~drive_line")
 
         self.goal_vec = self.goal_pt - self.start_pt
 
@@ -293,7 +295,7 @@ class Bug2Motion:
 
         self.car_state = None 
         self.car_state = CarState([self.start_pt[0],self.start_pt[1],90.0])
-        self.m_line = Line(np.array(self.start_pt),np.array(self.goal_pt))
+        self.m_line = Line(self.start_pt,self.goal_pt)
         
         self.odom_sub = rospy.Subscriber(odom_topic, Odometry, self.move)
         self.odom_sub = rospy.Subscriber(ransac_lines_topic, Marker, self.update_obstacle_detection)
@@ -305,20 +307,32 @@ class Bug2Motion:
 
         self.motion_algo = Bug2(self.start_pt,self.goal_pt, self.car_state)
 
-    def update_obstacle_detection(self, msg):
-        p1 = msg.points[0]
-        p2 = msg.points[1]
-        p1 = np.array([p1.x,p1.y])
-        p2 = np.array([p2.x,p2.y])
-        self.wall_line = Line(p1,p2)
+        self.marker_pub = rospy.Publisher(drive_line_topic, Marker, queue_size=10)
+  
 
-        self.motion_algo.update_obstacle(Line(p1,p2))
+
+
+    def update_obstacle_detection(self, msg):
+
+
+        indx = 0
+        lines = []
+        for i in range(len(msg.points)/2):
+            
+            p1 = msg.points[indx*i]
+            p2 = msg.points[indx*i+1]
+            p1 = np.array([p1.x,p1.y])
+            p2 = np.array([p2.x,p2.y])
+            lines.append(Line(p1,p2))
+            
+        #self.wall_line = Line(p1,p2)
+
+        self.motion_algo.update_obstacle(lines)
 
     def move(self,msg):
         #Get odometry and execute the algorithm
         #update car current state
 
-        #self.car_state.update_pose(msg)
         self.motion_algo.car_current_state.update_pose(msg)
 
         [linear, angular] = self.motion_algo.move()
@@ -327,145 +341,35 @@ class Bug2Motion:
         twist_msg.linear= Vector3(linear[0],0,0)
         
 
+        
         rotation_val = 0.0
-        if math.fabs(angular[2]) >0.0:
-            rotation_val=1.0
+        if math.fabs(angular[2]) > 0.0:
+            rotation_val=0.5
             if angular[2] < 0:
                 rotation_val=rotation_val*-1
-        # if self.motion_algo.is_wall_following():#Increase the rotation speed
-        #     rotation_val=rotation_val*45.0
+
 
         twist_msg.angular= Vector3(0,0,rotation_val)
         print(linear[0],angular[2], self.motion_algo.mode, self.motion_algo.motion_state, self.motion_algo.get_obstacle_angle())
-
-        # twist_msg.linear= Vector3(0,0,0)        
-        # twist_msg.angular= Vector3(0,0,0)       
+    
 
         self.drive_pub.publish(twist_msg)
-            
 
+        self.publish_lines([self.motion_algo.get_required_direction()])
 
-
-
-        
-
-
-
-
-
-
-
-
-
-    # def update_wall(self, msg):
-        
-    #     p1 = msg.points[0]
-    #     p2 = msg.points[1]
-    #     p1 = np.array([p1.x,p1.y])
-    #     p2 = np.array([p2.x,p2.y])
-    #     d = abs(np.cross(p2-p1, p1)/np.linalg.norm(p2-p1))
-
-    #     # if self.current_state == state_list[0]:
-    #     #     self.current_wall=None
-    #     if d < self.collision_threshold:
-    #         self.current_wall=[p1,p2]
-    #         print("Wall found")
-
-
-  
-    # def check_if_encountered_goal_line(self, pt):
-
-    #     goal_unit_vec = self.goal_vec / np.linalg.norm(self.goal_vec)         # unit vector from r0 to r1
-    #     pt_vec = np.array(pt) - np.array(self.start_pt)             # vector from r0 to pt
-    #     dist_proj = np.dot(pt_vec, goal_unit_vec)   # projection (length) of r onto r01u
-    #     proj_vector = goal_unit_vec * dist_proj         # projection vector
-    #     pt_on_line = self.start_pt + proj_vector           # point on line
-        
-    #     dist = np.linalg.norm(np.array(pt) - pt_on_line)
-    #     print("goal line distance", dist)
-    #     return abs(dist) < 0.00001
-
-    # def rotation_angle(self, line1, line2):
-    #     return math.degrees(math.atan2(line2[1],line2[0]) - math.atan2(line1[1],line1[0]))
-
-       
-
-    # def check_if_collison(self):
-    #     if self.current_wall:
-    #         return True
-    #     return False
-
-    # def get_pose(self,msg):
-    #     state_x = msg.pose.pose.position.x
-    #     state_y = msg.pose.pose.position.y
-        
-    #     quaternion = (
-    #         msg.pose.pose.orientation.x,
-    #         msg.pose.pose.orientation.y,
-    #         msg.pose.pose.orientation.z,
-    #         msg.pose.pose.orientation.w)
-    #     euler = tf.transformations.euler_from_quaternion(quaternion)
-    #     current_angle = euler[2] #Yaw
-
-    #     return [state_x,state_y, current_angle]
-
-    # def goal_walker(self, msg):
-        
-    #     twist_msg = Twist()
-    #     twist_msg.linear= Vector3(0,0,0)
-    #     twist_msg.angular= Vector3(0,0,0)
-
-
-    #     current_angle=0
-
-    #     current_direction = np.array([math.cos(current_angle),math.sin(current_angle)])
-
-    #     if self.current_state == mod_list[0]:
-    #         #Goal seeking
-    #         print("Goal Seeking")
-    #         #check collision
-    #         if self.check_if_collison():
-    #             #change state to wall follow direction parallel to wall
-    #             self.current_state = mod_list[1]
-                
-    #             #get angle between obstacle and current direction and rotate
-    #             self.current_direction = np.array(self.current_wall[0]) - np.array(self.current_wall[1]) 
-
-    #             self.current_direction = self.current_direction / np.linalg.norm(self.current_direction) 
-                
-                
-    #     else:
-    #         # wall Following
-    #         print("Wall following")
-    #         #check if intersecting m-line
-    #         if self.check_if_encountered_goal_line([state_x,state_y]) and not self.rotating:                
-    #             #change state to goal seeking
-    #             self.current_state = mod_list[0]
-                
-    #             #get angle between m_line and current direction and rotate
-
-    #             self.current_direction = np.array([self.goal_pt[0],self.goal_pt[1]])- np.array([state_x,state_y])
-    #             self.current_direction = self.current_direction / np.linalg.norm(self.current_direction) 
-                 
-
-    #     angle_rot = self.rotation_angle(current_direction, self.current_direction)
-
-    #     print("Rotate ", angle_rot)
-
-    #     if abs(angle_rot)> 3:
-    #         sign=1.0
-    #         if angle_rot<0:
-    #             sign=-1.0
-
-    #         twist_msg.angular= Vector3(0,0,sign*0.5)
-    #         self.rotating=True
-    #     else:
-    #         twist_msg.linear= Vector3(0.5,0,0)
-    #         self.rotating=False
-
-    #     #
-    #     self.drive_pub.publish(twist_msg)
-
+    def publish_lines(self, lines):
+        if len(lines)>0: # check for list is not empty
+            fitted_lines = Marker()
+            fitted_lines.type = Marker.LINE_LIST
+            fitted_lines.scale.x=0.2
+            fitted_lines.scale.y=0.2
+            fitted_lines.color = ColorRGBA(0.0,1.0,0,1)   
+            fitted_lines.header.frame_id= "odom"     
+            for line in lines:
+                [p1,p2] = line.get_ros_points()
+                fitted_lines.points.append(p1)
+                fitted_lines.points.append(p2)
+            self.marker_pub.publish(fitted_lines)
 
 
 
