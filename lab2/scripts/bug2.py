@@ -58,7 +58,7 @@ class CarState:
 class Bug2:
     mode_list = ["GOAL_SEEK","WALL_FOLLOW"]
     motion_list = ["forward", "rotate"]
-    def __init__(self, start_pt, goal_pt, car_state,collision_detection_threshold=1.5):
+    def __init__(self, start_pt, goal_pt, car_state,collision_detection_threshold=1):
         self.mode = self.mode_list[0]
         self.goal_line = Line(start_pt, goal_pt)
         self.start_pt = start_pt
@@ -78,15 +78,12 @@ class Bug2:
 
         self.angle_alignment_threshold = 3.0
 
-        #self.current_rotation_direction = current_direction
 
         self.rotation_angle = -90 #right
 
         
 
     def update_obstacle(self, obstacle_lines):
-        # if self.mode == self.mode_list[1] and self.motion_state ==self.motion_list[1]:
-        #     return
         self.obstacle_lines = obstacle_lines
 
     def is_colliding(self):
@@ -95,15 +92,36 @@ class Bug2:
             obstacle_angle = self.get_obstacle_angle()
             
             dist_from_obstacle = ob_line_normal.mag()
-            print(dist_from_obstacle,"obstacle dist")
-            #dist_from_obstacle = self.get_obstacle_line().get_shortest_dist_from_pt(self.car_current_state.get_position_vector())
+
             if  dist_from_obstacle < self.collision_detection_threshold:
-                print("collision detected  with angle  ", obstacle_angle)
+                
                 if abs(obstacle_angle) < 50.0:
                     print("collision detected ", obstacle_angle," dist", dist_from_obstacle)
                     return True
 
         return False
+
+    def dist_wall_on_left(self):
+        #need to check if wall is on the left to follow wall
+        #ob_line_normal = self.get_obstacle_line()
+        #need to get the obstacle on left
+        left_wall_dist = 10
+        ob_line_normal = self.get_obstacle_line_between(30, 120) 
+        if ob_line_normal:
+            
+            #obstacle_angle = self.get_obstacle_angle()
+            #print(obstacle_angle)
+            dist_from_obstacle = ob_line_normal.mag()
+            print("ob_line_normal check",dist_from_obstacle)
+            if  dist_from_obstacle < self.collision_detection_threshold*2.0:
+                
+                #if obstacle_angle > 40.0:
+                left_wall_dist = dist_from_obstacle
+                print("collision detected on left , dist=", dist_from_obstacle)
+                return left_wall_dist
+
+        return left_wall_dist        
+
 
     def get_closest_obstacle_point(self):
 
@@ -115,7 +133,7 @@ class Bug2:
             origin = np.array([0.0,0.0])
             for line in self.obstacle_lines:
                 dist = line.get_shortest_dist_from_pt(origin)
-                if dist == closest_dist:
+                if dist < closest_dist:
                     closest_dist = dist
                     best_line = line
             closest_obstacle_pt = best_line.get_closest_point_from_pt(origin)
@@ -128,7 +146,32 @@ class Bug2:
         
         if closest_pt is not None:
             return Line(np.array([0.0,0.0]), closest_pt)
-        return None      
+        return None
+
+    def get_obstacle_line_between(self, start_angle, end_angle):
+        
+        best_line=None
+        max_dist = 0
+        if len(self.obstacle_lines)>0:
+            closest_dist = 10000.0
+            
+
+            origin = np.array([0.0,0.0])
+            for line in self.obstacle_lines:
+                dist = line.get_shortest_dist_from_pt(origin)
+                closest_obstacle_pt = line.get_closest_point_from_pt(origin)
+                ob_line = Line(np.array([0.0,0.0]), closest_obstacle_pt)
+                x_axis = Line(np.array([0.0,0.0]), np.array([1.0,0.0]))
+                angle_on_x = ob_line.get_alignment_angle(x_axis)
+                if start_angle <= angle_on_x and end_angle >=angle_on_x:
+                    if dist < closest_dist:
+                        closest_dist = dist
+                        best_line = ob_line
+        
+        return best_line
+
+
+
     def get_obstacle_angle(self):
         ob_line = self.get_obstacle_line()
         if ob_line:
@@ -138,15 +181,17 @@ class Bug2:
         return None
             
 
-    def get_required_direction(self):
-        ob_line = self.get_obstacle_line()
-        if ob_line:
-            x_axis = Line(np.array([0.0,0.0]), np.array([1.0,0.0]))
-            ob_angle = ob_line.get_alignment_angle(x_axis)
-            required_angle = ob_angle + self.rotation_angle
-            #print(required_angle, "required angle ",ob_angle," ob angle")
-            
-            return self.get_obstacle_line().get_rotated_vector(self.rotation_angle)
+    def get_required_direction(self, rotation_angle):
+
+        if self.mode == self.mode_list[1]: # wall following
+            ob_line = self.get_obstacle_line()
+            if ob_line:
+                x_axis = Line(np.array([0.0,0.0]), np.array([1.0,0.0]))
+                ob_angle = ob_line.get_alignment_angle(x_axis)
+                required_angle = rotation_angle - ob_angle
+                
+                return self.get_obstacle_line().get_rotated_vector(required_angle)
+            return None
         return self.goal_line
 
     def follow_wall(self):
@@ -155,8 +200,11 @@ class Bug2:
 
         #get rotation angle to align with the wall
         current_direction = self.car_current_state.get_direction_vector()
-
-        self.required_rotation = self.get_required_direction().get_alignment_angle(current_direction)
+        
+        rotated_direction = self.get_required_direction(-90)
+        self.required_rotation =0.0
+        if rotated_direction:
+            self.required_rotation = rotated_direction.get_alignment_angle(current_direction)
 
         self.last_change_pt = self.car_current_state.get_position_vector()
 
@@ -211,37 +259,54 @@ class Bug2:
                     self.follow_goal()
                     linear_motion = [0,0,0]
                 else:
-                    #pass #continue moving parallel to wall 
+                    #continue moving parallel to wall 
                     #TODO: need to use PID for wall follow
-                    current_direction = self.car_current_state.get_direction_vector()
-                    #self.current_rotation_direction = self.get_required_direction()
-                    self.required_rotation = self.get_required_direction().get_alignment_angle(current_direction)
+                    wall_dist = self.dist_wall_on_left()
+                    if self.dist_wall_on_left() > self.collision_detection_threshold*1.5:
+                        print("no wall detected on left, move left abruptly")
+                        self.required_rotation = 1
+                        #linear_motion = [0.5,0,0]
+                        linear_motion = [0,0,0]
+                    elif wall_dist < self.collision_detection_threshold*1.5:
+                        self.required_rotation = -1
+                        print("moving away....... dist", wall_dist)
+                    else:
+
+                        current_direction = self.car_current_state.get_direction_vector()
+                        rotated_direction = self.get_required_direction(-120)
+                        self.required_rotation =0.0
+                        if rotated_direction:    
+                                           
+                            self.required_rotation = 0 #self.get_required_direction(0).get_alignment_angle(current_direction)
+                            print("wall calibration........................... angle", self.required_rotation) 
+                            linear_motion = [0.5,0,0]
+
+                        else:
+                        # print("wall not detected ...........................")
+                            #wall not detected on left, rotate left
+                            self.required_rotation = 0
+                
                     #print("wall following --------- with rotation",self.required_rotation )
-                    linear_motion = [0.5,0,0]
+                        
 
             else: #Wall following started, need to rotate and align
                 current_direction = self.car_current_state.get_direction_vector()
-                #self.current_rotation_direction = self.get_required_direction()
-                obstacle_angle = self.get_required_direction().get_alignment_angle(current_direction)
+                
+                obstacle_angle = self.get_required_direction(-90).get_alignment_angle(current_direction)
                 obstacle_angle_current = self.get_obstacle_angle()
                 print(obstacle_angle," --- Obstacle angle ", obstacle_angle_current,self.required_rotation)
                 
-
-                #if math.fabs(self.current_rotation_direction.get_alignment_angle(current_direction)) < self.angle_alignment_threshold and 
-                if math.fabs(self.required_rotation) < 5:
+                if math.fabs(obstacle_angle) < 5 and math.fabs(obstacle_angle_current) > 85: #self.required_rotation) < 5:
 
                 # if math.fabs(obstacle_angle) < self.angle_alignment_threshold and math.fabs(self.required_rotation) < 4: # rotation complete, need to move forward
                     self.required_rotation=0.0
                     #linear_motion = [0,0,0]
-                    #self.motion_state = self.motion_list[0] #set motion to forward, as rotation is complete
+                    self.motion_state = self.motion_list[0] #set motion to forward, as rotation is complete
                 else:
                     #continue rotation as still not aligned with wall
                     linear_motion = [0,0,0]
 
-                    #current_direction = self.car_current_state.get_direction_vector()
-                    self.current_rotation_direction = self.get_required_direction()
-                    self.required_rotation = self.get_required_direction().get_alignment_angle(current_direction)
-                
+                    self.required_rotation = obstacle_angle - obstacle_angle_current
         
         
         angular_motion =[0,0,self.required_rotation]
@@ -344,18 +409,18 @@ class Bug2Motion:
         
         rotation_val = 0.0
         if math.fabs(angular[2]) > 0.0:
-            rotation_val=0.5
+            rotation_val=0.3
             if angular[2] < 0:
                 rotation_val=rotation_val*-1
 
 
         twist_msg.angular= Vector3(0,0,rotation_val)
-        print(linear[0],angular[2], self.motion_algo.mode, self.motion_algo.motion_state, self.motion_algo.get_obstacle_angle())
+        #print(linear[0],angular[2], self.motion_algo.mode, self.motion_algo.motion_state, self.motion_algo.get_obstacle_angle())
     
 
         self.drive_pub.publish(twist_msg)
 
-        self.publish_lines([self.motion_algo.get_required_direction()])
+        self.publish_lines([self.motion_algo.get_required_direction(0)])
 
     def publish_lines(self, lines):
         if len(lines)>0: # check for list is not empty
