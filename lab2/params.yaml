@@ -1,6 +1,9 @@
 scan_topic: "base_scan"
 
+
 odom_topic: "odom"
+
+base_link_topic : "base_link"
 
 gt_pose_topic: "base_pose_ground_truth"
 
@@ -9,9 +12,9 @@ goal_seeker: "goal_seeker"
 goal_seeker_drive_topic: "cmd_vel"
 threshold_for_triggering_ransac: 2.0
 
-inliner_threshold: 0.09
+inliner_threshold: 0.1
 
-ransac_iteration_count : 6
+ransac_iteration_count : 5
 goal_pt: [4.5,9.0]
 start_pt: [-8.0,-2.0]
 

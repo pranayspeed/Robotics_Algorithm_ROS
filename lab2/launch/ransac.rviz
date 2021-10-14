@@ -9,6 +9,7 @@ Panels:
         - /Grid1
         - /Marker1
         - /Marker2
+        - /LaserScan1
       Splitter Ratio: 0.5
     Tree Height: 753
   - Class: rviz/Selection
@@ -29,7 +30,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: LaserScan
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -60,7 +61,7 @@ Visualization Manager:
       Marker Topic: /obstacle_lines
       Name: Marker
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -68,15 +69,43 @@ Visualization Manager:
       Marker Topic: /drive_direction
       Name: Marker
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/LaserScan
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: LaserScan
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Flat Squares
+      Topic: /base_scan
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: odom
-    Frame Rate: 5
+    Fixed Frame: base_link
+    Frame Rate: 15
   Name: root
   Tools:
     - Class: rviz/Interact
@@ -99,7 +128,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 11.232332229614258
+      Distance: 14.636967658996582
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -114,10 +143,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5847978591918945
+      Pitch: 0.7497979402542114
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.718562364578247
+      Yaw: 2.5235626697540283
     Saved: ~
 Window Geometry:
   Displays:

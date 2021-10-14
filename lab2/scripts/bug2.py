@@ -80,6 +80,7 @@ class Bug2:
 
 
         self.rotation_angle = -90 #right
+        
 
         
 
@@ -106,14 +107,14 @@ class Bug2:
         #ob_line_normal = self.get_obstacle_line()
         #need to get the obstacle on left
         left_wall_dist = 10
-        ob_line_normal = self.get_obstacle_line_between(30, 120) 
+        ob_line_normal = self.get_obstacle_line_between(30, 90) 
         if ob_line_normal:
             
             #obstacle_angle = self.get_obstacle_angle()
             #print(obstacle_angle)
             dist_from_obstacle = ob_line_normal.mag()
             print("ob_line_normal check",dist_from_obstacle)
-            if  dist_from_obstacle < self.collision_detection_threshold*2.0:
+            if  dist_from_obstacle < self.collision_detection_threshold:
                 
                 #if obstacle_angle > 40.0:
                 left_wall_dist = dist_from_obstacle
@@ -189,7 +190,7 @@ class Bug2:
                 x_axis = Line(np.array([0.0,0.0]), np.array([1.0,0.0]))
                 ob_angle = ob_line.get_alignment_angle(x_axis)
                 required_angle = rotation_angle - ob_angle
-                
+                print(required_angle)
                 return self.get_obstacle_line().get_rotated_vector(required_angle)
             return None
         return self.goal_line
@@ -240,6 +241,7 @@ class Bug2:
                 else:
                     # move forward, without rotation
                     #linear_motion = [0,0,0]
+                    
                     print("Moving forward without collision at front")
             else: #Goal following started, need to rotate and align with goal line
                 current_direction = self.car_current_state.get_direction_vector()
@@ -255,36 +257,37 @@ class Bug2:
         elif self.mode == self.mode_list[1]: #Wall following
             if self.motion_state ==self.motion_list[0]: #Moving Forward
                 d = self.goal_line.get_shortest_dist_from_pt(self.car_current_state.get_position_vector())
-                if d < 0.0001: #approaching goal line
+                if d < 0.1: #approaching goal line
                     self.follow_goal()
                     linear_motion = [0,0,0]
                 else:
                     #continue moving parallel to wall 
                     #TODO: need to use PID for wall follow
                     wall_dist = self.dist_wall_on_left()
-                    if self.dist_wall_on_left() > self.collision_detection_threshold*1.5:
-                        print("no wall detected on left, move left abruptly")
+                    if self.dist_wall_on_left() > self.collision_detection_threshold:
+                        #print("no wall detected on left, move left abruptly")
                         self.required_rotation = 1
-                        #linear_motion = [0.5,0,0]
-                        linear_motion = [0,0,0]
-                    elif wall_dist < self.collision_detection_threshold*1.5:
+                        linear_motion = [0.3,0,0]
+                        #linear_motion = [0,0,0]
+                    elif wall_dist < self.collision_detection_threshold:
                         self.required_rotation = -1
-                        print("moving away....... dist", wall_dist)
+                        #print("moving away....... dist", wall_dist)
                     else:
 
                         current_direction = self.car_current_state.get_direction_vector()
-                        rotated_direction = self.get_required_direction(-120)
-                        self.required_rotation =0.0
-                        if rotated_direction:    
+                        rotated_direction = self.get_required_direction(-90)
+                        
+                        self.required_rotation = 0#rotated_direction #0.0
+                        # if rotated_direction:    
                                            
-                            self.required_rotation = 0 #self.get_required_direction(0).get_alignment_angle(current_direction)
-                            print("wall calibration........................... angle", self.required_rotation) 
-                            linear_motion = [0.5,0,0]
+                        #     self.required_rotation = 0 #self.get_required_direction(0).get_alignment_angle(current_direction)
+                        #     #print("wall calibration........................... angle", self.required_rotation) 
+                        #     linear_motion = [0.5,0,0]
 
-                        else:
-                        # print("wall not detected ...........................")
-                            #wall not detected on left, rotate left
-                            self.required_rotation = 0
+                        # else:
+                        # # print("wall not detected ...........................")
+                        #     #wall not detected on left, rotate left
+                        #     self.required_rotation = 0
                 
                     #print("wall following --------- with rotation",self.required_rotation )
                         
@@ -294,7 +297,7 @@ class Bug2:
                 
                 obstacle_angle = self.get_required_direction(-90).get_alignment_angle(current_direction)
                 obstacle_angle_current = self.get_obstacle_angle()
-                print(obstacle_angle," --- Obstacle angle ", obstacle_angle_current,self.required_rotation)
+                #print(obstacle_angle," --- Obstacle angle ", obstacle_angle_current,self.required_rotation)
                 
                 if math.fabs(obstacle_angle) < 5 and math.fabs(obstacle_angle_current) > 85: #self.required_rotation) < 5:
 
@@ -354,6 +357,8 @@ class Bug2Motion:
 
         self.collision_threshold = rospy.get_param("~collision_threshold")
         self.rotating=False
+
+        self.base_link_topic = rospy.get_param("~base_link_topic")
 
 
         #new Implementation
@@ -429,7 +434,7 @@ class Bug2Motion:
             fitted_lines.scale.x=0.2
             fitted_lines.scale.y=0.2
             fitted_lines.color = ColorRGBA(0.0,1.0,0,1)   
-            fitted_lines.header.frame_id= "odom"     
+            fitted_lines.header.frame_id= self.base_link_topic   
             for line in lines:
                 [p1,p2] = line.get_ros_points()
                 fitted_lines.points.append(p1)

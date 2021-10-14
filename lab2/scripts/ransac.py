@@ -27,6 +27,7 @@ class RANSAC:
         
 
         scan_topic = rospy.get_param("~scan_topic")
+        self.base_link_topic = rospy.get_param("~base_link_topic")
         drive_topic = rospy.get_param("~goal_seeker_drive_topic")
         self.threshold_for_triggering_ransac = rospy.get_param("~threshold_for_triggering_ransac")
         self.inliner_threshold = rospy.get_param("~inliner_threshold")
@@ -50,15 +51,7 @@ class RANSAC:
 
 
     def check_fitting(self,msg):
-        
-        min_range = min(msg.ranges)
-
-        if min_range <self.threshold_for_triggering_ransac:
-            self.fit_lines(msg)
-        else:
-            print("ransac not triggered",min_range)
-        
-        #self.fit_lines(msg)
+        self.fit_lines(msg)
 
     def get_line_parameter(self, points):
         #points : list of polar coordinates p_i and Theta_i
@@ -101,7 +94,7 @@ class RANSAC:
         points.scale.y=0.1
         points.color = ColorRGBA(1.0,0,0,1)
 
-        points.header.frame_id= "odom"
+        points.header.frame_id= self.base_link_topic
 
         angle_min =        msg.angle_min
         angle_increment =  msg.angle_increment
@@ -138,7 +131,7 @@ class RANSAC:
             lines_marker.scale.y=0.2
             lines_marker.color = ColorRGBA(1.0,1.0,0,1)
 
-            lines_marker.header.frame_id= "odom"
+            lines_marker.header.frame_id= self.base_link_topic
 
             for line in lines:
                 #print(line)
@@ -159,7 +152,7 @@ class RANSAC:
         lines_marker.scale.y=0.2
         lines_marker.color = ColorRGBA(0.0,1.0,0,1)
 
-        lines_marker.header.frame_id= "odom"
+        lines_marker.header.frame_id= self.base_link_topic
 
 
         lines_marker.points.append(Point(line[0][0]*math.cos(line[0][1]),line[0][0]*math.sin(line[0][1]),0.0))
@@ -247,7 +240,7 @@ class RANSAC:
             fitted_lines.scale.x=0.2
             fitted_lines.scale.y=0.2
             fitted_lines.color = ColorRGBA(1.0,1.0,0,1)   
-            fitted_lines.header.frame_id= "odom"     
+            fitted_lines.header.frame_id= self.base_link_topic     
             for line in lines:
                 [p1,p2] = line.get_ros_points()
                 fitted_lines.points.append(p1)
@@ -264,16 +257,16 @@ class RANSAC:
         points.scale.y=0.1
         points.color = ColorRGBA(1.0,0,0,1)
 
-        points.header.frame_id= "odom"
+        points.header.frame_id= self.base_link_topic
 
         angle_min =        msg.angle_min
         angle_increment =  msg.angle_increment
 
-        # base_x=0
-        # base_y=0
+        
+        filtered_index = [idx for idx, val in enumerate(msg.intensities) if val >0.5]
 
-        min_dist = 0.0
-        for pt_indx in range(len(msg.ranges)):
+        for pt_indx in filtered_index: #range(len(msg.ranges)):
+
             pt_angle = angle_min + pt_indx*angle_increment
 
             #print(pt_angle)
@@ -287,10 +280,10 @@ class RANSAC:
             # base_x=x
             # base_y=y
 
+        if (len(points.points)>2):
+            lines = self.ransac(points.points)
 
-        lines = self.ransac(points.points)
-
-        self.publish_lines(lines)
+            self.publish_lines(lines)
 
 
         #self.marker_pub.publish(points)
