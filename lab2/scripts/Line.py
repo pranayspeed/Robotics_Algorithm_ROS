@@ -57,33 +57,33 @@ class Line:
         # x1 = (r1**2-r2**2 - l**2)/(2*l)
         # pt_on_line = self.start - (self.end - self.start)*x1 
 
-        # vec = self.end-self.start
-        # uvec = vec / np.linalg.norm(vec)
-        # pt_vec = pt - self.start
-        # dist_proj = np.dot(pt_vec, uvec)
-        # proj_vector = uvec * dist_proj
-        # pt_on_line = self.start + proj_vector
+        vec = self.end-self.start
+        uvec = vec / np.linalg.norm(vec)
+        pt_vec = pt - self.start
+        dist_proj = np.dot(pt_vec, uvec)
+        proj_vector = uvec * dist_proj
+        pt_on_line = self.start + proj_vector
 
-        # #print(np.linalg.norm(pt_on_line1-pt_on_line)," diff in distance")
+        #print(np.linalg.norm(pt_on_line1-pt_on_line)," diff in distance")
 
-        # return pt_on_line
+        return pt_on_line
 
-        p1 = self.start
-        p2 = self.end
+        # p1 = self.start
+        # p2 = self.end
 
-        #distance between p1 and p2
-        l2 = np.sum((p1-p2)**2)
+        # #distance between p1 and p2
+        # l2 = np.sum((p1-p2)**2)
 
-        #if you need the point to project on line extention connecting p1 and p2
-        t = np.sum((pt - p1) * (p2 - p1)) / l2
+        # #if you need the point to project on line extention connecting p1 and p2
+        # t = np.sum((pt - p1) * (p2 - p1)) / l2
 
-        #if you need the point to project on line segment between p1 and p2 or closest point of the line segment
-        #t = max(0, min(1, np.sum((pt - p1) * (p2 - p1)) / l2))
-        t= np.sum((pt - p1) * (p2 - p1)) / l2
+        # #if you need the point to project on line segment between p1 and p2 or closest point of the line segment
+        # #t = max(0, min(1, np.sum((pt - p1) * (p2 - p1)) / l2))
+        # t= np.sum((pt - p1) * (p2 - p1)) / l2
 
-        projection = p1 + t * (p2 - p1)
+        # projection = p1 + t * (p2 - p1)
         
-        return projection
+        # return projection
 
 
 

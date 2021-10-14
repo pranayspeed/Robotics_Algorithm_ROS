@@ -265,6 +265,8 @@ class RANSAC:
         
         filtered_index = [idx for idx, val in enumerate(msg.intensities) if val >0.5]
 
+        if len(filtered_index)==0:
+            filtered_index = [idx for idx, val in enumerate(msg.intensities)]
         for pt_indx in filtered_index: #range(len(msg.ranges)):
 
             pt_angle = angle_min + pt_indx*angle_increment
@@ -280,10 +282,10 @@ class RANSAC:
             # base_x=x
             # base_y=y
 
-        if (len(points.points)>2):
-            lines = self.ransac(points.points)
+        
+        lines = self.ransac(points.points)
 
-            self.publish_lines(lines)
+        self.publish_lines(lines)
 
 
         #self.marker_pub.publish(points)
