@@ -22,3 +22,5 @@ ransac_lines : "obstacle_lines"
 drive_line : "drive_direction"
 
 collision_threshold: 0.7
+collision_detection_threshold: 0.8
+wall_follow_dist: 1.0

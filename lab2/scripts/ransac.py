@@ -10,7 +10,6 @@ from visualization_msgs.msg import Marker
 from std_msgs.msg import ColorRGBA
 
 
-
 import math
 
 import numpy as np
@@ -32,14 +31,12 @@ class RANSAC:
         self.inliner_threshold = rospy.get_param("~inliner_threshold")
         self.ransac_iteration_count = rospy.get_param("~ransac_iteration_count")
 
-
         ransac_lines_topic = rospy.get_param("~ransac_lines")
 
         self.laser_sub = rospy.Subscriber(scan_topic, LaserScan, self.check_fitting)
 
         self.marker_pub = rospy.Publisher(ransac_lines_topic, Marker, queue_size=10)
   
-
 
     def check_fitting(self,msg):
         self.fit_lines(msg)
@@ -49,8 +46,8 @@ class RANSAC:
         if len(lines)>0: # check for list is not empty
             fitted_lines = Marker()
             fitted_lines.type = Marker.LINE_LIST
-            fitted_lines.scale.x=0.2
-            fitted_lines.scale.y=0.2
+            fitted_lines.scale.x=0.05
+            fitted_lines.scale.y=0.05
             fitted_lines.color = ColorRGBA(1.0,1.0,0,1)   
             fitted_lines.header.frame_id= self.base_link_topic     
             for line in lines:
