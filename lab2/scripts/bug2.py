@@ -288,18 +288,18 @@ class Bug2:
                     if wall_dist > self.wall_follow_dist*0.9:#self.collision_detection_threshold:
 
                         self.required_rotation = 1#self.get_required_direction(-90).get_alignment_angle(current_direction)
-                        #print("no wall detected on left, move left abruptly = ",wall_dist, self.required_rotation)
+                        print("no wall detected on left, move left abruptly = ",wall_dist, self.required_rotation)
                         #self.required_rotation = 1
-                        linear_motion = [0.7,0,0]
+                        linear_motion = [0.4,0,0]
 
                     elif wall_dist <= self.wall_follow_dist*0.5:
                         linear_motion = [0.7,0,0]
                         
                         self.required_rotation = self.get_required_direction(-90).get_alignment_angle(current_direction)
-                        #print("moving away....... dist", wall_dist,self.required_rotation)
+                        print("moving away....... dist", wall_dist,self.required_rotation)
                     else:
 
-                        linear_motion = [0.7,0,0]
+                        linear_motion = [0.9,0,0]
                         self.required_rotation = 0.0# self.get_required_direction(-90).get_alignment_angle(current_direction)
                         
 
