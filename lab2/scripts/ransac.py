@@ -262,11 +262,15 @@ class RANSAC:
         angle_min =        msg.angle_min
         angle_increment =  msg.angle_increment
 
-        
-        filtered_index = [idx for idx, val in enumerate(msg.intensities) if val >0.5]
-
-        if len(filtered_index)==0:
-            filtered_index = [idx for idx, val in enumerate(msg.intensities)]
+        filtered_index =  [idx for idx, val in enumerate(msg.ranges)]
+        try:
+            if len(msg.intensities)>0:
+                filtered_index = [idx for idx, val in enumerate(msg.intensities) if val >0.5]
+                if len(filtered_index)<2:
+                    filtered_index =  [idx for idx, val in enumerate(msg.ranges)]
+        except:
+            pass
+        print(len(filtered_index))
         for pt_indx in filtered_index: #range(len(msg.ranges)):
 
             pt_angle = angle_min + pt_indx*angle_increment
@@ -276,11 +280,6 @@ class RANSAC:
             y = msg.ranges[pt_indx]* math.sin(pt_angle)
             points.points.append(Point(x,y,0.0))
 
-            # if pt_indx ==1:
-            #     min_dist = np.linalg.norm(np.array([base_x,base_y]) - np.array([x,y]))
-
-            # base_x=x
-            # base_y=y
 
         
         lines = self.ransac(points.points)
