@@ -21,19 +21,7 @@ class Line:
         vec2 = self.end - self.start
         vec2 = vec2/np.linalg.norm(vec2)
         return  math.degrees(math.atan2(vec2[1],vec2[0]) - math.atan2(vec1[1],vec1[0]))
-
-
-    def get_acute_angle(self, other_line):
-        vec1 = other_line.end - other_line.start
-        vec1 = vec1/np.linalg.norm(vec1)
-        vec2 = self.end - self.start
-        vec2 = vec2/np.linalg.norm(vec2)
-        dot_product = np.dot(vec1, vec2)
-        angle = -math.degrees(np.arccos(dot_product))
-        print(angle)
-        if abs(angle)>180:
-            angle = angle-180
-        return angle    
+    
 
     def get_closest_point_from_pt(self, pt):
 
