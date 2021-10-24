@@ -12,7 +12,4 @@
 	      args="$(find lab2)/world/playground.world" />
 
 
-  <!-- Launch RVIZ -->
-  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find lab2)/launch/ransac.rviz" output="screen"/>
-
 </launch>

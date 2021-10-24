@@ -23,9 +23,9 @@ drive_line : "drive_direction"
 
 collision_threshold: 0.7
 collision_detection_threshold: 0.6
-wall_follow_dist: 0.6
+wall_follow_dist: 0.8
 
-kp: 1.6
+kp: 0.8
 ki: 0.05
 kd: 0.1
-look_ahead : 0.9
+look_ahead : 0.5
