@@ -33,7 +33,7 @@ for i=1:image_count
     % Sum of Squared Differences
 
      window_size =30;
-     pad_size=20;
+     pad_size=30;
      ssd_image = im_align1(r, g, b, window_size,pad_size);
      figure(i);
 
