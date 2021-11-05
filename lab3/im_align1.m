@@ -4,14 +4,14 @@ pad_r = pad_image(r,pad_size);
 pad_g = pad_image(g,pad_size);
 pad_b = pad_image(b,pad_size);
 
-[shiftr_x, shiftr_y] = align_2_image_ssd(pad_g,pad_r,window_size)
+[sx, sy] = align_2_image_ssd(pad_g,pad_r,window_size)
 
-sr =circshift(r,[shiftr_y,shiftr_x]);
+sr =circshift(r,[sy,sx]);
 
 
-[shiftg_x, shiftg_y] = align_2_image_ssd(pad_g,pad_b,window_size)
+[sx, sy] = align_2_image_ssd(pad_g,pad_b,window_size)
 
-sb =circshift(b,[shiftg_y,shiftg_x]);
+sb =circshift(b,[sy,sx]);
 
 
 ssd_image = cat(3, sr, g, sb);
