@@ -24,7 +24,7 @@ for i=1:image_count
     % for debugging the output images
     figure(i)
 
-    subplot(1,4,1);
+    subplot(2,2,1);
     imshow(rgb_img);  
     title("image"+i+"-color");
 
@@ -34,13 +34,15 @@ for i=1:image_count
 
      window_size =30;
      pad_size=30;
-     ssd_image = im_align1(r, g, b, window_size,pad_size);
+     [ssd_image, rgbshift_ssd] = im_align1(r, g, b, window_size,pad_size);
      figure(i);
 
-     subplot(1,4,2);
+     subplot(2,2,2);
      imshow(ssd_image);
-     title("image"+i+"-ssd");
-
+     
+     
+     out_shift = rgb_shift_print("SSD", rgbshift_ssd);
+     title("image"+i+" "+ out_shift);
     outfile_name = "image"+i+"-ssd.jpg";
     imwrite(ssd_image, outfile_name);
 
@@ -50,13 +52,14 @@ for i=1:image_count
 
 
      pad_size=20;
-     ncc_image = im_align2(r, g, b, pad_size);
+     [ncc_image, rgbshift_ccn ] = im_align2(r, g, b, pad_size);
      figure(i);
 
-     subplot(1,4,3);
+     subplot(2,2,3);
      imshow(ncc_image);
-     title("image"+i+"-ncc");
-
+     
+    out_shift = rgb_shift_print("CCN", rgbshift_ccn);
+    title("image"+i+" "+ out_shift);
     outfile_name = "image"+i+"-ncc.jpg";
     imwrite(ncc_image, outfile_name);
  
@@ -67,14 +70,15 @@ for i=1:image_count
     % Corner detection and alignment
 
      pad_size =60;
-     cross_image = im_align3(r, g, b, pad_size);
+     [cross_image, rgbshift_corner] = im_align3(r, g, b, pad_size);
 
      figure(i);
 
-     subplot(1,4,4);
+     subplot(2,2,4);
      imshow(cross_image);
-     title("image"+i+"-corner");
 
+    out_shift = rgb_shift_print("Corner", rgbshift_corner);
+    title("image"+i+" "+ out_shift);
     outfile_name = "image"+i+"-corner.jpg";
     imwrite(cross_image, outfile_name);
 
@@ -88,13 +92,23 @@ function [blueChannel,greenChannel,redChannel]= get_separate_BGR(img)
 
 [height, ~] = size(img);
 
-% Extract the individual blue, green, and red color channels.
-blueChannel = img(1:height/3, :);
-greenChannel = img(height/3+1:(2*height)/3, :);
-redChannel = img((2*height/3)+1:height, :);
+h3 = floor(height/3);
 
+% Extract the individual blue, green, and red color channels.
+blueChannel = img(1:h3, :);
+greenChannel = img(h3+1:2*h3, :);
+redChannel = img(2*h3+1:3*h3, :);
 end
 
+function output = rgb_shift_print(method, rgbshift)
+
+% Shifted  R G B
+%disp(['RGB Shift  R(',rgbshift(1,:),'), G(',rgbshift(2,:),'), B(',rgbshift(3,:),').']);
+
+output = sprintf('%s RGB Shift  R(%d,%d),G(%d,%d),B(%d,%d)\n',method, rgbshift(1,:),rgbshift(2,:),rgbshift(3,:));
+
+fprintf(output);
+end
 
 
 

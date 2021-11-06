@@ -1,20 +1,29 @@
-function ssd_image = im_align1(r,g,b, window_size, pad_size)
+function [ssd_image, rgb_shift] = im_align1(r,g,b, window_size, pad_size)
 
 pad_r = pad_image(r,pad_size);
 pad_g = pad_image(g,pad_size);
 pad_b = pad_image(b,pad_size);
 
-[sx, sy] = align_2_image_ssd(pad_g,pad_r,window_size)
+
+rgb_shift = zeros(3,2);
+
+[sx, sy] = align_2_image_ssd(pad_g,pad_r,window_size);
 
 sr =circshift(r,[sy,sx]);
 
+rgb_shift(1,:) = [sy,sx];
 
-[sx, sy] = align_2_image_ssd(pad_g,pad_b,window_size)
+[sx, sy] = align_2_image_ssd(pad_g,pad_b,window_size);
 
 sb =circshift(b,[sy,sx]);
 
+rgb_shift(3,:) = [sy,sx];
 
 ssd_image = cat(3, sr, g, sb);
+
+
+
+rgb_shift(2,:) = [0 0];
 
 end
 
@@ -43,7 +52,7 @@ function img = pad_image(image, pad_size)
    [row,col] = size(image);
    corp_size=pad_size;
    img = image(corp_size/2 : row - (corp_size/2) , corp_size/2 : col - (corp_size/2));
-   size(img)
+
 end
 
 function ssd = SSD(a,b)
