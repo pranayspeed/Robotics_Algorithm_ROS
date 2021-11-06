@@ -42,8 +42,8 @@ num_features = min(length(corners_a), length(corners_b));
 %%==================================
 
 itercount = 7;
-thDist = 1; % inliner pixel window
-thInlrRatio = 0.30; %95% inliners
+thDist = 2; % inliner pixel window
+thInlrRatio = 0.20; %95% inliners
 sampleNum = 1;
 thInlr = round(thInlrRatio*num_features);
 inlrNum = zeros(1,itercount);
@@ -51,6 +51,8 @@ x1 = zeros(1,itercount);
 y1 = zeros(1,itercount);
 
 p=1;
+miss_count=0;
+max_miss=10;
 while p <= itercount
 	% 1. fit using 2 random points
 	sampleIdx_a = randsample(num_features,sampleNum);
@@ -70,7 +72,16 @@ while p <= itercount
     [k, dist] = dsearchn(corners_a, s_corners_b);
     
     inlier1 = find(abs(dist) < thDist);
-    if length(inlier1) < thInlr, continue; end
+    if length(inlier1) < thInlr
+%         miss_count=miss_count+1;
+%         if miss_count> max_miss
+%           miss_count=0;
+%           %max_miss=max_miss+40;
+%           thInlrRatio =thInlrRatio-0.05;
+%           thInlr = round(thInlrRatio*num_features);
+%         end
+        continue; 
+    end
     inlrNum(p) = length(inlier1);
     x1(p) = d(1);
     y1(p) = d(2);
