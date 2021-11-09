@@ -10,11 +10,13 @@ for i=1:image_count
 
     img = imread("image"+i+".jpg");
     [b,g,r] = get_separate_BGR(img);
-
+    
+    figure(i);
     %%
     % Part 1 ================================================
     % Recombine separate color channels into an BGR image.
     % 
+
     rgb_image = cat(3, r, g, b);
 
     outfile_name = "image"+i+"-color.jpg";
@@ -22,8 +24,9 @@ for i=1:image_count
 
     rgb_img = imread(outfile_name);
     % for debugging the output images
-    figure(i)
-
+    
+    %figure(i)
+    
     subplot(2,2,1);
     imshow(rgb_img);  
     title("image"+i+"-color");
@@ -35,7 +38,7 @@ for i=1:image_count
      window_size =30;
      pad_size=30;
      [ssd_image, rgbshift_ssd] = im_align1(r, g, b, window_size,pad_size);
-     figure(i);
+     %figure(i);
 
      subplot(2,2,2);
      imshow(ssd_image);
@@ -53,7 +56,8 @@ for i=1:image_count
 
      pad_size=20;
      [ncc_image, rgbshift_ccn ] = im_align2(r, g, b, pad_size);
-     figure(i);
+     
+     %figure(i);
 
      subplot(2,2,3);
      imshow(ncc_image);
@@ -69,18 +73,21 @@ for i=1:image_count
     % Part 4 ================================================
     % Corner detection and alignment
 
-     pad_size =60;
+     pad_size =40;
      [cross_image, rgbshift_corner] = im_align3(r, g, b, pad_size);
 
-     figure(i);
+     %figure(i);
 
      subplot(2,2,4);
+     
      imshow(cross_image);
-
+     
     out_shift = rgb_shift_print("Corner", rgbshift_corner);
     title("image"+i+" "+ out_shift);
     outfile_name = "image"+i+"-corner.jpg";
     imwrite(cross_image, outfile_name);
+    
+    drawnow
 
 
 end
@@ -107,7 +114,7 @@ function output = rgb_shift_print(method, rgbshift)
 
 output = sprintf('%s RGB Shift  R(%d,%d),G(%d,%d),B(%d,%d)\n',method, rgbshift(1,:),rgbshift(2,:),rgbshift(3,:));
 
-fprintf(output);
+%fprintf(output);
 end
 
 

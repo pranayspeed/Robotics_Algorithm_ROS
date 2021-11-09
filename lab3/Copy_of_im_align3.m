@@ -39,22 +39,19 @@ y=0;
 num_features = 200;
 %%==================================
 % cornerness extraction
+[row,col] = find(b_c>0)
+ca = detectHarrisFeatures(a);
+corners_a = ca.selectStrongest(num_features).Location;
 
-ca = harris(a,num_features);
-[row,col] = find(ca>0);
-corners_a = [row col];
+cb = detectHarrisFeatures(b);
+corners_b = cb.selectStrongest(num_features).Location;
 
-cb = harris(b,num_features);
-[row,col] = find(cb>0);
-corners_b = [row col];
-
-%num_features = min(length(corners_a), length(corners_b));
-
+num_features = min(length(corners_a), length(corners_b));
 %%==================================
 
-itercount = 1000;
-thDist = 1; % inliner pixel window
-thInlrRatio = 0.05; %95% inliners
+itercount = 7;
+thDist = 2; % inliner pixel window
+thInlrRatio = 0.20; %95% inliners
 sampleNum = 1;
 thInlr = round(thInlrRatio*num_features);
 inlrNum = zeros(1,itercount);
@@ -78,16 +75,16 @@ while p <= itercount
     s_corners_b = corners_b + d;
 	
     % check shifted b with a for inliners
-
+    
     [k, dist] = dsearchn(corners_a, s_corners_b);
     
     inlier1 = find(abs(dist) < thDist);
-%     if length(inlier1) < thInlr
-%         continue; 
-%     end
+    if length(inlier1) < thInlr
+        continue; 
+    end
     inlrNum(p) = length(inlier1);
-    y1(p) = d(1);
-    x1(p) = d(2);
+    x1(p) = d(1);
+    y1(p) = d(2);
     p=p+1;
 
 end
@@ -96,6 +93,6 @@ end
 x = -int32(x1(idx));
 y = -int32(y1(idx));
 
-end
 
+end
 
