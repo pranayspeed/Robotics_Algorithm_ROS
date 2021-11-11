@@ -46,8 +46,8 @@ for i=1:image_count
      imshow(ssd_image);
      
      
-     out_shift = rgb_shift_print("SSD", rgbshift_ssd);
-     img_title_ssd = "image"+i+" "+ out_shift;
+     img_title_ssd = rgb_shift_print("SSD", rgbshift_ssd);
+     %img_title_ssd = "image"+i+" "+ out_shift;
      title(img_title_ssd);
     outfile_name = "image"+i+"-ssd.jpg";
     imwrite(ssd_image, outfile_name);
@@ -65,8 +65,8 @@ for i=1:image_count
      subplot(2,2,3);
      imshow(ncc_image);
      
-    out_shift = rgb_shift_print("NCC", rgbshift_ccn);
-    img_title_ncc = "image"+i+" "+ out_shift;
+    img_title_ncc = rgb_shift_print("NCC", rgbshift_ccn);
+    %img_title_ncc = "image"+i+" "+ out_shift;
     title(img_title_ncc);
     outfile_name = "image"+i+"-ncc.jpg";
     imwrite(ncc_image, outfile_name);
@@ -86,17 +86,17 @@ for i=1:image_count
      
      imshow(cross_image);
      
-    out_shift = rgb_shift_print("Corner", rgbshift_corner);
-    img_title_corner = "image"+i+" "+ out_shift;
+    img_title_corner = rgb_shift_print("Corner", rgbshift_corner);
+    %img_title_corner = "image"+i+" "+ out_shift;
     title(img_title_corner);
     outfile_name = "image"+i+"-corner.jpg";
     imwrite(cross_image, outfile_name);
     
     drawnow
     %% RGB Shifts
-    fprintf(img_title_ssd)
-    fprintf(img_title_ncc)
-    fprintf(img_title_corner)
+    fprintf("image"+i+" "+ img_title_ssd)
+    fprintf("image"+i+" "+ img_title_ncc)
+    fprintf("image"+i+" "+ img_title_corner)
     %%
 
 end
