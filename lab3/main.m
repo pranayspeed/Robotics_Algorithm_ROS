@@ -5,14 +5,16 @@ clc; clear all; close all
 %Image filter order is BGR
 image_count = 6;
 
-
+%% Images with the pixel shift as a title
+% For each image the title of each sub image constains the alignment method
+% along with the corrosponding RGB shifts
 for i=1:image_count
-
+%%    
     img = imread("image"+i+".jpg");
     [b,g,r] = get_separate_BGR(img);
     
     figure(i);
-    %%
+
     % Part 1 ================================================
     % Recombine separate color channels into an BGR image.
     % 
@@ -31,13 +33,13 @@ for i=1:image_count
     imshow(rgb_img);  
     title("image"+i+"-color");
 
-    %%
+   
     % Part 2 ================================================
     % Sum of Squared Differences
 
      window_size =30;
-     pad_size=30;
-     [ssd_image, rgbshift_ssd] = im_align1(r, g, b, window_size,pad_size);
+     pad_size=40;
+     [ssd_image, rgbshift_ssd] = im_align1(r, g, b);
      %figure(i);
 
      subplot(2,2,2);
@@ -45,36 +47,38 @@ for i=1:image_count
      
      
      out_shift = rgb_shift_print("SSD", rgbshift_ssd);
-     title("image"+i+" "+ out_shift);
+     img_title_ssd = "image"+i+" "+ out_shift;
+     title(img_title_ssd);
     outfile_name = "image"+i+"-ssd.jpg";
     imwrite(ssd_image, outfile_name);
 
-     %%
+    
     % Part 3 ================================================
     % Normalized cross-correlation
 
 
-     pad_size=20;
-     [ncc_image, rgbshift_ccn ] = im_align2(r, g, b, pad_size);
+     pad_size=40;
+     [ncc_image, rgbshift_ccn ] = im_align2(r, g, b);
      
      %figure(i);
 
      subplot(2,2,3);
      imshow(ncc_image);
      
-    out_shift = rgb_shift_print("CCN", rgbshift_ccn);
-    title("image"+i+" "+ out_shift);
+    out_shift = rgb_shift_print("NCC", rgbshift_ccn);
+    img_title_ncc = "image"+i+" "+ out_shift;
+    title(img_title_ncc);
     outfile_name = "image"+i+"-ncc.jpg";
     imwrite(ncc_image, outfile_name);
  
     
     
-     %%
+    
     % Part 4 ================================================
     % Corner detection and alignment
 
      pad_size =40;
-     [cross_image, rgbshift_corner] = im_align3(r, g, b, pad_size);
+     [cross_image, rgbshift_corner] = im_align3(r, g, b);
 
      %figure(i);
 
@@ -83,16 +87,21 @@ for i=1:image_count
      imshow(cross_image);
      
     out_shift = rgb_shift_print("Corner", rgbshift_corner);
-    title("image"+i+" "+ out_shift);
+    img_title_corner = "image"+i+" "+ out_shift;
+    title(img_title_corner);
     outfile_name = "image"+i+"-corner.jpg";
     imwrite(cross_image, outfile_name);
     
     drawnow
-
+    %% RGB Shifts
+    fprintf(img_title_ssd)
+    fprintf(img_title_ncc)
+    fprintf(img_title_corner)
+    %%
 
 end
 
-
+%%
 
 
 function [blueChannel,greenChannel,redChannel]= get_separate_BGR(img)
@@ -109,12 +118,8 @@ end
 
 function output = rgb_shift_print(method, rgbshift)
 
-% Shifted  R G B
-%disp(['RGB Shift  R(',rgbshift(1,:),'), G(',rgbshift(2,:),'), B(',rgbshift(3,:),').']);
+output = sprintf('%8s RGB Shift  R(%3d,%3d),G(%3d,%3d),B(%3d,%3d)\n',method, rgbshift(1,:),rgbshift(2,:),rgbshift(3,:));
 
-output = sprintf('%s RGB Shift  R(%d,%d),G(%d,%d),B(%d,%d)\n',method, rgbshift(1,:),rgbshift(2,:),rgbshift(3,:));
-
-%fprintf(output);
 end
 
 

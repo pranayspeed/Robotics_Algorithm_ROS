@@ -1,4 +1,6 @@
-function [feature_image, rgb_shift] = im_align3(r,g,b, pad_size)
+function [feature_image, rgb_shift] = im_align3(r,g,b)
+pad_size =40;
+window_size = 30;
 
 pad_r = pad_image(r,pad_size);
 pad_g = pad_image(g,pad_size);
@@ -6,19 +8,20 @@ pad_b = pad_image(b,pad_size);
 
 rgb_shift = zeros(3,2);
 
-[x,y] = ransac_align(pad_r,pad_b);
+
+[x,y] = current_align(pad_r,pad_g, window_size);
 sr =circshift(r,[y,x]);
 
 rgb_shift(1,:) = [y,x];
 
-[x,y] = ransac_align(pad_g,pad_b);
-sg =circshift(g,[y,x]);
+[x,y] = current_align(pad_b,pad_g, window_size);
+sb =circshift(b,[y,x]);
 
-rgb_shift(2,:) = [y,x];
+rgb_shift(3,:) = [y,x];
 
-feature_image = cat(3, sr, sg, b);
+feature_image = cat(3, sr, g, sb);
 
-rgb_shift(3,:) = [0 0];
+rgb_shift(2,:) = [0 0];
 
 end
 
@@ -31,8 +34,14 @@ function img = pad_image(image, pad_size)
 end
 
 
+function [x, y] =  current_align(a,b, window_size)
+thresh_inliners =0.05;
 
-function [ x, y] = ransac_align(a, b)
+[x,y] = ransac_align(a, b, window_size, thresh_inliners);
+
+end
+
+function [ x, y] = ransac_align(a, b, window_size, thresh_inliners)
 x=0;
 y=0;
 
@@ -52,11 +61,11 @@ corners_b = [row col];
 
 %%==================================
 
-itercount = 1000;
+itercount = 0.2 * num_features;
 thDist = 1; % inliner pixel window
-thInlrRatio = 0.05; %95% inliners
+
 sampleNum = 1;
-thInlr = round(thInlrRatio*num_features);
+thInlr = round(thresh_inliners*num_features);
 inlrNum = zeros(1,itercount);
 x1 = zeros(1,itercount);
 y1 = zeros(1,itercount);
@@ -65,9 +74,9 @@ p=1;
 
 while p <= itercount
 	% 1. fit using 2 random points
-	sampleIdx_a = randsample(num_features,sampleNum);
+	sampleIdx_a = randsample(window_size,sampleNum);
 	ptSample_a = corners_a(sampleIdx_a,:);
-	sampleIdx_b = randsample(num_features,sampleNum);
+	sampleIdx_b = randsample(window_size,sampleNum);
 	ptSample_b = corners_b(sampleIdx_b,:);
     
     % pixel shift
@@ -82,9 +91,9 @@ while p <= itercount
     [k, dist] = dsearchn(corners_a, s_corners_b);
     
     inlier1 = find(abs(dist) < thDist);
-%     if length(inlier1) < thInlr
-%         continue; 
-%     end
+    if length(inlier1) < thInlr
+        continue; 
+    end
     inlrNum(p) = length(inlier1);
     y1(p) = d(1);
     x1(p) = d(2);
@@ -92,7 +101,7 @@ while p <= itercount
 
 end
 % % 3. choose the coef with the most inliers
-[max_val,idx] = max(inlrNum);
+[~, idx] = max(inlrNum);
 x = -int32(x1(idx));
 y = -int32(y1(idx));
 
