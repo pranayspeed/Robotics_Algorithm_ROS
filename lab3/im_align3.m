@@ -57,8 +57,6 @@ cb = harris(b,num_features);
 [row,col] = find(cb>0);
 corners_b = [row col];
 
-%num_features = min(length(corners_a), length(corners_b));
-
 %%==================================
 
 itercount = 0.2 * num_features;
@@ -80,26 +78,24 @@ while p <= itercount
 	ptSample_b = corners_b(sampleIdx_b,:);
     
     % pixel shift
-    d = ptSample_a-ptSample_b;
+    d = ptSample_b-ptSample_a;
     
-	% apply shift to all samples in b
-    
-    s_corners_b = corners_b + d;
+	% apply shift to all samples in b    
+    s_corners_b = corners_b - d;
 	
     % check shifted b with a for inliners
-   
     dist = compute_closest_dists(corners_a, s_corners_b);
-    inliers_ct = find(abs(dist) < thDist);
+    inliers = find(abs(dist) < thDist);
     
-    curr_inliners = length(inliers_ct);
+    curr_inliners = length(inliers);
     if curr_inliners < min_inliners
         continue; 
     end
     
     if max_inliner < curr_inliners
         max_inliner = curr_inliners;
-        y = -int32(d(1));
-        x = -int32(d(2));
+        y = int32(d(1));
+        x = int32(d(2));
     end
 
     p=p+1;
@@ -112,12 +108,12 @@ end
 
 function dist = compute_closest_dists(a , b)
 
-d = zeros(size(b,1),1);
+dist = zeros(size(b,1),1);
 for i = 1:size(b,1) 
     yi = repmat(b(i,:),size(a,1),1);
-    [d(i),~] = min(sum((a-yi).^2,2));
+    dist(i) = sqrt(min(sum((a-yi).^2,2)));
 end
-dist = sqrt(d); 
+
 end
 
 
