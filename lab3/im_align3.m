@@ -65,10 +65,10 @@ itercount = 0.2 * num_features;
 thDist = 1; % inliner pixel window
 
 sampleNum = 1;
-thInlr = round(thresh_inliners*num_features);
-inlrNum = zeros(1,itercount);
-x1 = zeros(1,itercount);
-y1 = zeros(1,itercount);
+min_inliners = round(thresh_inliners*num_features);
+
+
+max_inliner = 0;
 
 p=1;
 
@@ -87,24 +87,37 @@ while p <= itercount
     s_corners_b = corners_b + d;
 	
     % check shifted b with a for inliners
-
-    [k, dist] = dsearchn(corners_a, s_corners_b);
+   
+    dist = compute_closest_dists(corners_a, s_corners_b);
+    inliers_ct = find(abs(dist) < thDist);
     
-    inlier1 = find(abs(dist) < thDist);
-    if length(inlier1) < thInlr
+    curr_inliners = length(inliers_ct);
+    if curr_inliners < min_inliners
         continue; 
     end
-    inlrNum(p) = length(inlier1);
-    y1(p) = d(1);
-    x1(p) = d(2);
+    
+    if max_inliner < curr_inliners
+        max_inliner = curr_inliners;
+        y = -int32(d(1));
+        x = -int32(d(2));
+    end
+
     p=p+1;
 
 end
-% % 3. choose the coef with the most inliers
-[~, idx] = max(inlrNum);
-x = -int32(x1(idx));
-y = -int32(y1(idx));
 
+
+end
+
+
+function dist = compute_closest_dists(a , b)
+
+d = zeros(size(b,1),1);
+for i = 1:size(b,1) 
+    yi = repmat(b(i,:),size(a,1),1);
+    [d(i),~] = min(sum((a-yi).^2,2));
+end
+dist = sqrt(d); 
 end
 
 
