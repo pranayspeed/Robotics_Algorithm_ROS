@@ -2,12 +2,19 @@ clc; clear all; close all
 %===============================
 
 
+%% Image R, G and B Channel Seperation
+% function [blueChannel,greenChannel,redChannel] =  get_separate_BGR(img)
+%
+% * Image is splitted in 3 equal channels B,G and R. 
+% 
+
+
 %% Image Channel Alignment using SSD
 %%
-% 
-% # Image is splitted in 3 equal channels B,G and R. 
+% function [feature_image, rgb_shift] = im_align1(r,g,b)
+%
 % # 20 boundary pixels are cropped before the Image processed for alignment.
-% # Used a displacemet window of [-30, 30] for alignment search.
+% # Used a displacement window of [-30, 30] for alignment search.
 % # Using channel G as fixed, search for x,y shift with minimum SSD value for R
 % channel looping within the displacement window.
 % # Repeat the previous step for channel B, keeping G as fixed.
@@ -17,21 +24,23 @@ clc; clear all; close all
 
 %% Image Channel Alignment using NCC
 %%
-% 
-% # Image is splitted in 3 equal channels B,G and R. 
-% # 15 boundary pixels are cropped before the Image processed for alignment.
-% # Using channel G as fixed, search for x,y shift with maximum/peak value 
-% for normalized cross-correlation between R and fixed channel G.
+% function [feature_image, rgb_shift] = im_align2(r,g,b)
+%
+% # 20 boundary pixels are cropped before the Image processed for alignment.
+% # Used a displacement window of [-30, 30] for alignment search.
+% # Using channel G as fixed, search for x,y shift with maximum NCC value for R
+% channel looping within the displacement window.
 % # Repeat the previous step for channel B, keeping G as fixed.
 % # Concatenate the channels R,G,B applying the shifts calculated and save the image 
 %
 
 %% Image Channel Alignment using Corner Feature detection
 %%
-% 
-% # Image is splitted in 3 equal channels B,G and R. 
+% function [feature_image, rgb_shift] = im_align3(r,g,b)
+%
 % # 20 boundary pixels are cropped before the Image processed for alignment.
-% # Using channel G as fixed, search for x,y shift using top 200 corners 
+% # Used a displacement window of [-30, 30] for alignment search.
+% # Using channel G as fixed, search for x,y shift using top 200 corners. 
 % extracted using harris corner detection function defined in harris.m file
 % and then using this corners with RANSAC algorithm to find the best alignment
 % by selecting the maximum inliners alignment shift value.
@@ -41,9 +50,10 @@ clc; clear all; close all
 
 
 %% Image Channel Alignment Output for SSD, NCC and Corners
+%
 % * For each image the title of each sub image constains the alignment method
 % along with the corrosponding RGB shifts
-% *Note: Shifted R and B channels with G channel as fixed.*
+% * * Note:* Shifted R and B channels with G channel as fixed.
 
 %Image filter order is BGR
 image_count = 6;
@@ -51,6 +61,7 @@ image_count = 6;
 for i=1:image_count
 %%    
     img = imread("image"+i+".jpg");
+    % Extract R,G and B channel
     [b,g,r] = get_separate_BGR(img);
     
     figure(i);
@@ -133,12 +144,12 @@ function [blueChannel,greenChannel,redChannel]= get_separate_BGR(img)
 
 [height, ~] = size(img);
 
-h3 = floor(height/3);
+hby3 = floor(height/3);
 
 % Extract the individual blue, green, and red color channels.
-blueChannel = img(1:h3, :);
-greenChannel = img(h3+1:2*h3, :);
-redChannel = img(2*h3+1:3*h3, :);
+blueChannel = img(1:hby3, :);
+greenChannel = img(hby3+1:2*hby3, :);
+redChannel = img(2*hby3+1:3*hby3, :);
 end
 
 function output = rgb_shift_print(method, rgbshift)
