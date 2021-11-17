@@ -63,3 +63,5 @@ end
 function ssd = SSD(a,b)
     ssd = sum(sum((double(a) - double(b)) .^ 2));
 end 
+
+

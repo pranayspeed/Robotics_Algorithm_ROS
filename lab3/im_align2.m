@@ -1,7 +1,6 @@
 function [feature_image, rgb_shift] = im_align2(r,g,b)
 
-
-pad_size =30;
+pad_size =40;
 window_size = 30;
 
 pad_r = pad_image(r,pad_size);
@@ -31,23 +30,44 @@ end
 
 function [x, y] =  current_align(a,b, window_size)
 
-ysize = size(a,1);
-xsize = size(a,2);
-c = normxcorr2(a, b);
-
-[ypeak,xpeak] = find(c==max(c(:)));
-
-y = ypeak-ysize;
-x = xpeak-xsize;
+[x,y] = align_2_image_ncc(a, b, window_size);
 
 end
 
+function [x_shift, y_shift] = align_2_image_ncc(a,b, window_size)
+
+adb = im2double(a);
+bdb = im2double(b);
+
+% Normalized image pixels
+an = adb./norm(adb);
+bn = bdb./norm(bdb);
+
+x_shift = 0;
+y_shift = 0;
+max_error = 0;
+for i = -window_size:window_size
+    for j = -window_size:window_size
+    bs=circshift(bn,[i,j]);
+    cur_error = sum(dot(an,bs));% Normalized cross-correlation
+    if cur_error > max_error
+        max_error = cur_error;
+        y_shift = -i;
+        x_shift = -j;
+    end
+    end
+end
+
+end
 
 function img = pad_image(image, pad_size)
    [row,col] = size(image);
    corp_size=pad_size;
      
    img = image(corp_size/2 : row - (corp_size/2) , corp_size/2 : col - (corp_size/2));
-   %img = padarray(image,[3 3],255,'both');
 end
+
+
+
+
 

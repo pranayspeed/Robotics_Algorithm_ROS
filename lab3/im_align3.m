@@ -71,7 +71,7 @@ max_inliner = 0;
 p=1;
 
 while p <= itercount
-	% 1. fit using 2 random points
+	% fit using 2 random points
 	sampleIdx_a = randsample(window_size,sampleNum);
 	ptSample_a = corners_a(sampleIdx_a,:);
 	sampleIdx_b = randsample(window_size,sampleNum);
