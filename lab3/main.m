@@ -15,9 +15,9 @@ clc; clear all; close all
 %
 % # 20 boundary pixels are cropped before the Image processed for alignment.
 % # Used a displacement window of [-30, 30] for alignment search.
-% # Using channel G as fixed, search for x,y shift with minimum SSD value for R
+% # Using channel B as fixed, search for x,y shift with minimum SSD value for R
 % channel looping within the displacement window.
-% # Repeat the previous step for channel B, keeping G as fixed.
+% # Repeat the previous step for channel G, keeping B as fixed.
 % # Concatenate the channels R,G,B applying the shifts calculated and save the image 
 %
 
@@ -28,9 +28,9 @@ clc; clear all; close all
 %
 % # 20 boundary pixels are cropped before the Image processed for alignment.
 % # Used a displacement window of [-30, 30] for alignment search.
-% # Using channel G as fixed, search for x,y shift with maximum NCC value for R
+% # Using channel B as fixed, search for x,y shift with maximum NCC value for R
 % channel looping within the displacement window.
-% # Repeat the previous step for channel B, keeping G as fixed.
+% # Repeat the previous step for channel G, keeping B as fixed.
 % # Concatenate the channels R,G,B applying the shifts calculated and save the image 
 %
 
@@ -40,20 +40,20 @@ clc; clear all; close all
 %
 % # 20 boundary pixels are cropped before the Image processed for alignment.
 % # Used a displacement window of [-30, 30] for alignment search.
-% # Using channel G as fixed, search for x,y shift using top 200 corners. 
+% # Using channel B as fixed, search for x,y shift using top 200 corners. 
 % extracted using harris corner detection function defined in harris.m file
 % and then using this corners with RANSAC algorithm to find the best alignment
 % by selecting the maximum inliners alignment shift value.
-% # Repeat the previous step for channel B, keeping G as fixed.
+% # Repeat the previous step for channel G, keeping B as fixed.
 % # Concatenate the channels R,G,B applying the shifts calculated and save the image 
 %
 
 
 %% Image Channel Alignment Output for SSD, NCC and Corners
 %
-% * For each image the title of each sub image constains the alignment method
+% * For each image the title of each sub image contains the alignment method
 % along with the corrosponding RGB shifts
-% * * Note:* Shifted R and B channels with G channel as fixed.
+% * * Note:* Shifted R and G channels with B channel as fixed.
 
 %Image filter order is BGR
 image_count = 6;

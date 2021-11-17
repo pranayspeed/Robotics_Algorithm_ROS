@@ -1,27 +1,43 @@
 function [feature_image, rgb_shift] = im_align3(r,g,b)
-pad_size =40;
-window_size = 30;
+pad_size =50;
+window_size = 40;
 
 pad_r = pad_image(r,pad_size);
 pad_g = pad_image(g,pad_size);
 pad_b = pad_image(b,pad_size);
 
+
 rgb_shift = zeros(3,2);
 
+[x,y] = current_align(pad_r,pad_b, window_size);
 
-[x,y] = current_align(pad_r,pad_g, window_size);
-sr =circshift(r,[y,x]);
+if max(abs([x,y]))> window_size
+    [gx,gy] = current_align(pad_g,pad_b, window_size);
+    sg =circshift(g,[gy,gx]);
 
-rgb_shift(1,:) = [y,x];
+    rgb_shift(2,:) = [gy,gx];
 
-[x,y] = current_align(pad_b,pad_g, window_size);
-sb =circshift(b,[y,x]);
 
-rgb_shift(3,:) = [y,x];
+    [rx,ry] = current_align(pad_r,pad_g, window_size);
+    sr =circshift(r,[ry+gy,rx+gx]);
 
-feature_image = cat(3, sr, g, sb);
+    rgb_shift(1,:) = [ry+gy,rx+gx];
 
-rgb_shift(2,:) = [0 0];
+else
+    sr =circshift(r,[y,x]);
+
+    rgb_shift(1,:) = [y,x];
+
+    [x,y] = current_align(pad_g,pad_b, window_size);
+    sg =circshift(g,[y,x]);
+
+    rgb_shift(2,:) = [y,x];    
+end
+
+
+feature_image = cat(3, sr, sg, b);
+
+rgb_shift(3,:) = [0 0];
 
 end
 
@@ -70,6 +86,7 @@ max_inliner = 0;
 
 p=1;
 
+
 while p <= itercount
 	% fit using 2 random points
 	sampleIdx_a = randsample(window_size,sampleNum);
@@ -84,7 +101,7 @@ while p <= itercount
     s_corners_b = corners_b - d;
 	
     % check shifted b with a for inliners
-    dist = compute_closest_dists(corners_a, s_corners_b);
+    [~, dist] = compute_closest_dists(corners_a, s_corners_b);
     inliers = find(abs(dist) < thDist);
     
     curr_inliners = length(inliers);
@@ -97,7 +114,7 @@ while p <= itercount
         y = int32(d(1));
         x = int32(d(2));
     end
-
+    
     p=p+1;
 
 end
@@ -106,12 +123,14 @@ end
 end
 
 
-function dist = compute_closest_dists(a , b)
+function [indx, dist] = compute_closest_dists(a , b)
 
 dist = zeros(size(b,1),1);
+indx = zeros(size(b,1),1);
 for i = 1:size(b,1) 
     yi = repmat(b(i,:),size(a,1),1);
-    dist(i) = sqrt(min(sum((a-yi).^2,2)));
+    [dist(i),indx(i)] = min(sum((a-yi).^2,2));
+    dist(i) = sqrt(dist(i));
 end
 
 end
