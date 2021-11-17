@@ -13,8 +13,8 @@ clc; clear all; close all
 %%
 % function [feature_image, rgb_shift] = im_align1(r,g,b)
 %
-% # 20 boundary pixels are cropped before the Image processed for alignment.
-% # Used a displacement window of [-30, 30] for alignment search.
+% # 50 boundary pixels are cropped before the Image processed for alignment.
+% # Used a displacement window of [-40, 40] for alignment search.
 % # Using channel B as fixed, search for x,y shift with minimum SSD value for R
 % channel looping within the displacement window.
 % # Repeat the previous step for channel G, keeping B as fixed.
@@ -26,8 +26,8 @@ clc; clear all; close all
 %%
 % function [feature_image, rgb_shift] = im_align2(r,g,b)
 %
-% # 20 boundary pixels are cropped before the Image processed for alignment.
-% # Used a displacement window of [-30, 30] for alignment search.
+% # 50 boundary pixels are cropped before the Image processed for alignment.
+% # Used a displacement window of [-40, 40] for alignment search.
 % # Using channel B as fixed, search for x,y shift with maximum NCC value for R
 % channel looping within the displacement window.
 % # Repeat the previous step for channel G, keeping B as fixed.
@@ -38,8 +38,8 @@ clc; clear all; close all
 %%
 % function [feature_image, rgb_shift] = im_align3(r,g,b)
 %
-% # 20 boundary pixels are cropped before the Image processed for alignment.
-% # Used a displacement window of [-30, 30] for alignment search.
+% # 50 boundary pixels are cropped before the Image processed for alignment.
+% # Used a displacement window of [-40, 40] for alignment search.
 % # Using channel B as fixed, search for x,y shift using top 200 corners. 
 % extracted using harris corner detection function defined in harris.m file
 % and then using this corners with RANSAC algorithm to find the best alignment
