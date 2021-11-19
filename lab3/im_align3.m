@@ -13,23 +13,23 @@ rgb_shift = zeros(3,2);
 
 if max(abs([x,y]))> window_size
     [gx,gy] = current_align(pad_g,pad_b, window_size);
-    sg =circshift(g,[gy,gx]);
+    sg =my_circshift(g,[gy,gx]);
 
     rgb_shift(2,:) = [gy,gx];
 
 
     [rx,ry] = current_align(pad_r,pad_g, window_size);
-    sr =circshift(r,[ry+gy,rx+gx]);
+    sr =my_circshift(r,[ry+gy,rx+gx]);
 
     rgb_shift(1,:) = [ry+gy,rx+gx];
 
 else
-    sr =circshift(r,[y,x]);
+    sr =my_circshift(r,[y,x]);
 
     rgb_shift(1,:) = [y,x];
 
     [x,y] = current_align(pad_g,pad_b, window_size);
-    sg =circshift(g,[y,x]);
+    sg =my_circshift(g,[y,x]);
 
     rgb_shift(2,:) = [y,x];    
 end
@@ -135,4 +135,23 @@ end
 
 end
 
+
+
+function res = my_circshift(a,shifts)
+    y = shifts(1);
+    x = shifts(2);
+    [ys, xs] = size(a);
+    
+    yarr = [ys - y+1:ys 1:ys-y];
+    xarr = [xs - x+1:xs 1:xs-x];
+    
+    if y < 0
+       yarr = [-y+1:ys  1:-y ]; 
+    end
+    if x < 0
+        xarr = [-x+1:xs  1:-x ];
+    end
+    res = a(yarr, xarr);
+    
+end
 

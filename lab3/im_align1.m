@@ -11,12 +11,12 @@ pad_b = pad_image(b,pad_size);
 rgb_shift = zeros(3,2);
 
 [x,y] = current_align(pad_r,pad_b, window_size);
-sr =circshift(r,[y,x]);
+sr =my_circshift(r,[y,x]);
 
 rgb_shift(1,:) = [y,x];
 
 [x,y] = current_align(pad_g,pad_b, window_size);
-sg =circshift(g,[y,x]);
+sg =my_circshift(g,[y,x]);
 
 rgb_shift(2,:) = [y,x];
 
@@ -40,7 +40,8 @@ y_shift = 0;
 min_error = inf;
 for i = -window_size:window_size
     for j = -window_size:window_size
-    bs=circshift(b,[i,j]);
+
+    bs=my_circshift(b,[i,j]);
     cur_error = SSD(a,bs);
     if cur_error < min_error
         min_error = cur_error;
@@ -64,4 +65,22 @@ function ssd = SSD(a,b)
     ssd = sum(sum((double(a) - double(b)) .^ 2));
 end 
 
+
+function res = my_circshift(a,shifts)
+    y = shifts(1);
+    x = shifts(2);
+    [ys, xs] = size(a);
+    
+    yarr = [ys - y+1:ys 1:ys-y];
+    xarr = [xs - x+1:xs 1:xs-x];
+    
+    if y < 0
+       yarr = [-y+1:ys  1:-y ]; 
+    end
+    if x < 0
+        xarr = [-x+1:xs  1:-x ];
+    end
+    res = a(yarr, xarr);
+    
+end
 
