@@ -334,7 +334,6 @@ class AStarPlanner:
     cross_neighbours = [[-1,-1],[+1,-1],[-1,+1],[+1,+1]]
     def __init__(self, map):
         self.map = map
-
         self.width = len(self.map[len(self.map)-1])
         self.height = len(self.map)
 
