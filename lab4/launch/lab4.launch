@@ -1,0 +1,14 @@
+<launch>
+
+
+	<node pkg="lab4" name="astar" type="AStar.py" output="screen">
+		<rosparam command="load" file="$(find lab2)/params.yaml"/>
+	</node>
+
+
+	<node name="stage" pkg="stage_ros" type="stageros"
+	      args="$(find lab4)/world/playground.world" />
+		  
+     <param name="map_file" value="$(find lab4)/world/map.txt" />
+
+</launch>
