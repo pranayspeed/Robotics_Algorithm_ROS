@@ -63,12 +63,8 @@ class CarMotion:
         self.goal_pt = goal_pt
         self.car_current_state = car_state
 
-        self.kp=0.1
-        self.ki=0.1
-        self.kd=0.1
         self.prev_error=None
         self.integral=0.0
-        self.look_ahead=0.1
         self.last_time=None
 
 
@@ -110,7 +106,7 @@ class CarMotion:
         if current_line is None:
             curr_pos = self.car_current_state.get_position_vector()
             current_line = Line(curr_pos, self.goal_pt)
-            #self.goal_line
+
         current_direction = self.car_current_state.get_direction_vector()
 
         required_rotation = current_line.get_alignment_angle(current_direction)
@@ -126,7 +122,6 @@ class CarMotion:
 
             elif goal_dist < 0.5:
                 print("goal reaching..........")
-                print(self.car_current_state.get_position_vector())
                 kp=0.2
                 ki=0 
                 kd=0.1        
@@ -187,9 +182,9 @@ def get_goal_path(start_pt, goal_pt, map):
     final_path = astar_planner.search(start, goal, euclidean_dist)
 
     new_path = []
-
-    for pt in final_path:
-        new_path.append([ pt[0] - xo, - (pt[1] -yo)])
+    if final_path:
+        for pt in final_path:
+            new_path.append([ pt[0] - xo, - (pt[1] -yo)])
     print(new_path)
     return new_path
 
@@ -217,16 +212,9 @@ class AStar:
         
         self.odom_sub = rospy.Subscriber(odom_topic, Odometry, self.update_pos)
 
-        self.kp = rospy.get_param("~kp")
-        self.ki = rospy.get_param("~ki")
-        self.kd = rospy.get_param("~kd")
-        self.look_ahead = rospy.get_param("~look_ahead")
 
         self.motion_algo = CarMotion(start_pt, goal_pt, car_state)
-        self.motion_algo.kp = self.kp
-        self.motion_algo.ki = self.ki
-        self.motion_algo.kd = self.kd
-        self.look_ahead = self.look_ahead
+
 
     def stop_move(self):
         if self.curr_index > len(self.path_list)-1:
@@ -253,10 +241,7 @@ class AStar:
                 goal_orient = self.motion_algo.car_current_state.theta
                 car_state = CarState([start_pt[0],start_pt[1],goal_orient])
                 self.motion_algo = CarMotion(start_pt, goal_pt, car_state)
-                self.motion_algo.kp = self.kp
-                self.motion_algo.ki = self.ki
-                self.motion_algo.kd = self.kd
-                self.look_ahead = self.look_ahead
+
 
                 self.curr_index= 0
                 print("New goal updated")
@@ -394,7 +379,6 @@ class AStarPlanner:
         closed_list = []
 
         while len(open_list)>0:
-            # This operation can occur in O(1) time if openSet is a min-heap or a priority queue
 
             current = open_list[0]
             current_index=0
@@ -403,7 +387,7 @@ class AStarPlanner:
                     current = item
                     current_index = index
 
-            if current ==goal: #.x == goal.x and current.y == goal.y:
+            if current ==goal:
                 return return_path(previous_node, current)
 
             open_list.pop(current_index)
@@ -414,7 +398,7 @@ class AStarPlanner:
                 if neighbor in closed_list:
                     continue
 
-                g_score_n = gScore[current] + 1 #h(current, neighbor) #1
+                g_score_n = gScore[current] + 1
 
                 if neighbor in open_list:
                    if g_score_n > gScore[neighbor]:
